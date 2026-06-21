@@ -6,6 +6,7 @@ import { initFirebase } from './firebase.js';
 import authRoutes from './routes/auth.js';
 import solutionsRoutes from './routes/solutions.js';
 import activityRoutes from './routes/activity.js';
+import chatRoutes from './routes/chat.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', database: 'firebase' }));
 

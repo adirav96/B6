@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Dashboard from '@/pages/Dashboard';
+import Dashboard from '@/views/Dashboard';
 
 export default function DashboardPage() {
   return (

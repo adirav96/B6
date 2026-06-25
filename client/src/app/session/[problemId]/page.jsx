@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
-import InterviewSession from '@/pages/InterviewSession';
+import InterviewSession from '@/views/InterviewSession';
 
 export default function SessionPage() {
   return (

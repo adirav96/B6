@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Progress from '@/pages/Progress';
+import Progress from '@/views/Progress';
 
 export default function ProgressPage() {
   return (

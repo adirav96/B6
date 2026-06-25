@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Simulation from '@/pages/Simulation';
+import Simulation from '@/views/Simulation';
 
 export default function SimulationPage() {
   return (

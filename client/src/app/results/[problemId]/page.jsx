@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Results from '@/pages/Results';
+import Results from '@/views/Results';
 
 export default function ResultsPage() {
   return (

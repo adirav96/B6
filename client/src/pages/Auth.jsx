@@ -1,19 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../context/AppContext';
 
-export default function Auth() {
-  const [mode, setMode] = useState('login');
+export default function Auth({ initialMode = 'login' }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [university, setUniversity] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const { login, register } = useApp();
+
+  useEffect(() => {
+    const saved = localStorage.getItem('remembered_email');
+    if (saved) {
+      setEmail(saved);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +34,8 @@ export default function Auth() {
       const result = await login(email, password);
       setSubmitting(false);
       if (result.success) {
+        if (rememberMe) localStorage.setItem('remembered_email', email);
+        else localStorage.removeItem('remembered_email');
         router.push('/dashboard');
       } else {
         setError(result.error);
@@ -54,12 +65,12 @@ export default function Auth() {
           <p className="text-indigo-200">הכנה חכמה לראיונות טכניים</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+        <div className="bg-purple-50 dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-purple-200 dark:border-gray-700">
+          <div className="flex mb-6 bg-purple-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => { setMode('login'); setError(''); }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'login' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                mode === 'login' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
               התחברות
@@ -67,7 +78,7 @@ export default function Auth() {
             <button
               onClick={() => { setMode('register'); setError(''); }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'register' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                mode === 'register' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
               הרשמה
@@ -111,6 +122,21 @@ export default function Auth() {
                 dir="ltr"
               />
             </div>
+
+            {mode === 'login' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 accent-primary cursor-pointer"
+                />
+                <label htmlFor="rememberMe" className="text-sm text-gray-600 cursor-pointer select-none">
+                  זכור אותי
+                </label>
+              </div>
+            )}
 
             {mode === 'register' && (
               <div>

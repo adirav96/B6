@@ -1,3 +1,10 @@
+function renderBold(text) {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+  );
+}
+
 export default function ChatBubble({ message }) {
   if (message.role === 'ai') {
     return (
@@ -5,8 +12,10 @@ export default function ChatBubble({ message }) {
         <div className="bg-primary/10 p-2 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
           <i className="fas fa-robot text-primary text-sm"></i>
         </div>
-        <div className="chat-bubble bg-gray-100 rounded-2xl rounded-tr-sm p-4">
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</p>
+        <div className="chat-bubble bg-purple-50 dark:bg-purple-950/40 rounded-2xl rounded-tr-sm p-4">
+          <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+            {renderBold(message.content)}
+          </p>
         </div>
       </div>
     );
@@ -17,10 +26,9 @@ export default function ChatBubble({ message }) {
       <div className="chat-bubble bg-primary text-white rounded-2xl rounded-tl-sm p-4">
         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
       </div>
-      <div className="bg-gray-200 p-2 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
-        <i className="fas fa-user text-gray-600 text-sm"></i>
+      <div className="bg-purple-100 dark:bg-purple-900 p-2 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+        <i className="fas fa-user text-primary text-sm"></i>
       </div>
     </div>
   );
 }
-//reusable UI

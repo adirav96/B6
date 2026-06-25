@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     res.json({ solutions });
   } catch (err) {
     console.error('Get solutions error:', err);
-    res.status(500).json({ error: 'שגיאת שרת' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -53,7 +53,7 @@ router.post('/:problemId', async (req, res) => {
     });
   } catch (err) {
     console.error('Save solution error:', err);
-    return sendError(res, 500, 'שגיאת שרת', 'SERVER_ERROR');
+    return sendError(res, 500, 'Server error', 'SERVER_ERROR');
   }
 });
 

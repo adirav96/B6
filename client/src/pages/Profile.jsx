@@ -6,20 +6,14 @@ import AchievementBadge from '@/components/AchievementBadge';
 import { getAchievements } from '@/data/fakeData';
 import { useApp } from '@/context/AppContext';
 
-const HEBREW_MONTHS = [
-  'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
-  'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
-];
+const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
 export default function Profile() {
   const { user, logout, solutions, activityLog } = useApp();
   const achievements = useMemo(() => getAchievements(solutions, activityLog), [solutions, activityLog]);
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
+  const handleLogout = () => { logout(); router.push('/login'); };
 
   const joinLabel = useMemo(() => {
     if (!user.joinDate) return '';
@@ -31,7 +25,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-purple-50 dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-gray-700 overflow-hidden">
         <div className="bg-gradient-to-l from-primary to-purple-600 p-8">
           <div className="flex items-center gap-6">
             <img src={avatarUrl} className="w-24 h-24 rounded-full border-4 border-white/30" alt="avatar" />
@@ -49,39 +43,39 @@ export default function Profile() {
         <div className="p-8">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-bold text-gray-900 mb-4">פרטים אישיים</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-4">פרטים אישיים</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-500">אימייל</label>
-                  <p className="text-gray-900">{user.email}</p>
+                  <label className="text-sm text-gray-500 dark:text-gray-400">אימייל</label>
+                  <p className="text-gray-900 dark:text-gray-100">{user.email}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">תחומי עניין</label>
+                  <label className="text-sm text-gray-500 dark:text-gray-400">תחומי עניין</label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {['Backend', 'Data Structures', 'Machine Learning', 'System Design'].map(tag => (
-                      <span key={tag} className="bg-indigo-50 text-indigo-700 text-xs font-medium px-3 py-1 rounded-full">{tag}</span>
+                      <span key={tag} className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium px-3 py-1 rounded-full">{tag}</span>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">חברות יעד</label>
+                  <label className="text-sm text-gray-500 dark:text-gray-400">חברות יעד</label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {['Google', 'Microsoft', 'Wix', 'Monday.com'].map(c => (
-                      <span key={c} className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">{c}</span>
+                      <span key={c} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium px-3 py-1 rounded-full">{c}</span>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 mb-4">הישגים</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-4">הישגים</h3>
               <div className="grid grid-cols-3 gap-3">
                 {achievements.map((a, idx) => <AchievementBadge key={idx} {...a} />)}
               </div>
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="mt-8 pt-6 border-t border-purple-200 dark:border-gray-700">
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors"

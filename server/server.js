@@ -9,15 +9,16 @@ import authRoutes from './routes/auth.js';
 import solutionsRoutes from './routes/solutions.js';
 import activityRoutes from './routes/activity.js';
 import chatRoutes from './routes/chat.js';
+import runRoutes from './routes/run.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS: Whitelist specific origins
+// allow requests from the Next.js dev server and production frontend
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5000',
-  process.env.FRONTEND_URL, // Add production URL
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(cors({
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/run', runRoutes);
 
 import { getDb } from './firebase.js';
 
@@ -53,9 +55,12 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-function start() {
+async function start() {
   try {
     initFirebase();
+    // Run a dummy read before accepting traffic — Firestore cold-starts can take ~1s
+    // and the first real request would time out without this
+    await getDb().collection('_healthcheck').limit(1).get();
     console.log('Connected to Firebase Firestore');
     app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
   } catch (err) {

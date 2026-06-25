@@ -10,7 +10,6 @@ import { sendError } from '../utils/response.js';
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Add authentication and rate limiting
 router.use(auth);
 router.use(chatLimiter);
 
@@ -21,6 +20,8 @@ router.post('/', async (req, res) => {
   if (validationErrors.length > 0) {
     return sendError(res, 400, validationErrors.join('; '), 'VALIDATION_ERROR', validationErrors);
   }
+
+  // build context blocks only when they exist — keeps the prompt shorter
 
   const examplesText = problem.examples?.length
     ? '\nדוגמאות:\n' + problem.examples.map((ex, i) =>

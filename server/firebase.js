@@ -3,6 +3,7 @@ import admin from 'firebase-admin';
 
 let db = null;
 
+// supports three credential strategies so the app works both locally and in CI/CD
 function loadServiceAccount() {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
     return JSON.parse(readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH, 'utf8'));
@@ -17,6 +18,7 @@ function loadServiceAccount() {
     return {
       project_id: FIREBASE_PROJECT_ID,
       client_email: FIREBASE_CLIENT_EMAIL,
+      // env vars escape newlines as \n — restore them for the PEM key
       private_key: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     };
   }
@@ -27,6 +29,7 @@ function loadServiceAccount() {
 }
 
 export function initFirebase() {
+  // guard against double-init (e.g. hot reload in dev)
   if (!admin.apps.length) {
     const serviceAccount = loadServiceAccount();
     admin.initializeApp({

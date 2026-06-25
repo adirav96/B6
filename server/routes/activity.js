@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     res.json({ activityLog });
   } catch (err) {
     console.error('Get activity error:', err);
-    res.status(500).json({ error: 'שגיאת שרת' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
     res.json(entry);
   } catch (err) {
     console.error('Save activity error:', err);
-    return sendError(res, 500, 'שגיאת שרת', 'SERVER_ERROR');
+    return sendError(res, 500, 'Server error', 'SERVER_ERROR');
   }
 });
 

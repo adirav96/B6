@@ -7,7 +7,7 @@
  */
 export function escapePromptText(text) {
   if (!text) return '';
-  
+
   // Limit field length to prevent prompt injection
   const maxLength = 1000;
   return String(text)
@@ -23,11 +23,11 @@ export function escapePromptText(text) {
 export function isStrongPassword(password) {
   if (typeof password !== 'string') return false;
   if (password.length < 8) return false;
-  
+
   const hasUpper = /[A-Z]/.test(password);
   const hasLower = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  
+
   return hasUpper && hasLower && hasNumber;
 }
 
@@ -35,5 +35,5 @@ export function isStrongPassword(password) {
  * Get password strength error message
  */
 export function getPasswordError() {
-  return 'הסיסמה חייבת להכיל לפחות 8 תווים, אותיות גדולות וקטנות ומספרים';
+  return 'Password must be at least 8 characters and include uppercase, lowercase, and a number';
 }

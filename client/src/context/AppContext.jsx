@@ -18,7 +18,7 @@ const AppContext = createContext(null);
 function getInitialState() {
   return {
     isLoggedIn: false,
-    loading: true,
+    loading: true, // true until we've checked the token
     user: null,
     solutions: {},
     activityLog: [],
@@ -57,6 +57,7 @@ function reducer(state, action) {
       return { ...state, activityLog: action.payload };
 
     case 'START_SESSION': {
+      // don't reset if the user navigates back to the same problem mid-session
       if (state.session && state.session.problemId === action.payload.problemId) {
         return state;
       }
@@ -367,6 +368,7 @@ export function AppProvider({ children }) {
     getStats,
     getTopicMastery,
     getRecentActivity,
+    getDifficultyBreakdown,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

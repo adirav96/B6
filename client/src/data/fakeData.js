@@ -7,7 +7,7 @@ export const DIFFICULTY_MAP = {
 export const STATUS_MAP = {
   completed: { icon: "fas fa-check-circle text-green-500", label: "הושלם" },
   "in-progress": { icon: "fas fa-clock text-amber-500", label: "בתהליך" },
-  "not-started": { icon: "far fa-circle text-gray-300", label: "" },
+  "not-started": { icon: "far fa-circle text-gray-400 dark:text-gray-500", label: "" },
   failed: { icon: "fas fa-times-circle text-red-400", label: "לא עבר" },
 };
 

@@ -8,9 +8,9 @@ export default function AppShell({ children }) {
   const hideNavbar = pathname === '/' || pathname === '/login';
 
   return (
-    <>
+    <div className="w-full max-w-full overflow-x-hidden">
       {!hideNavbar && <Navbar />}
       {children}
-    </>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { getDb } from '../config/firebase.js';
+import { getDb } from '../firebase.js';
 
 const COLLECTION = 'activity';
 

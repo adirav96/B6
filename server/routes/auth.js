@@ -2,6 +2,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import * as usersDb from '../db/users.js';
 import auth from '../middleware/auth.js';
+import { validateEmail } from '../utils/validators.js';
 
 const router = Router();
 
@@ -18,6 +19,9 @@ router.post('/register', async (req, res) => {
     }
     if (password.length < 4) {
       return res.status(400).json({ error: 'הסיסמה חייבת להכיל לפחות 4 תווים' });
+    }
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'אימייל אינו תקין' });
     }
 
     const existing = await usersDb.findByEmail(email);
@@ -41,6 +45,9 @@ router.post('/login', async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: 'נא למלא אימייל וסיסמה' });
+    }
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'אימייל אינו תקין' });
     }
 
     const user = await usersDb.findByEmail(email);

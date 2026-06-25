@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { getDb } from '../config/firebase.js';
+import { getDb } from '../firebase.js';
 
 const COLLECTION = 'users';
 

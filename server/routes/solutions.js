@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as solutionsDb from '../db/solutions.js';
 import auth from '../middleware/auth.js';
+import { validateSolutionData } from '../utils/validators.js';
 
 const router = Router();
 
@@ -20,6 +21,11 @@ router.post('/:problemId', async (req, res) => {
   try {
     const problemId = Number(req.params.problemId);
     const { score, timeSpent, code, testsPassed, totalTests, hintsUsed } = req.body;
+
+    const validationErrors = validateSolutionData({ score, timeSpent, code, testsPassed, totalTests, hintsUsed });
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ error: validationErrors.join('; ') });
+    }
 
     const solution = await solutionsDb.upsert(req.userId, problemId, {
       score,

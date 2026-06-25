@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
+import { validateChatRequest } from '../utils/validators.js';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -7,8 +8,9 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 router.post('/', async (req, res) => {
   const { problem, messages, code, hintsRevealed } = req.body;
 
-  if (!problem || !messages) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  const validationErrors = validateChatRequest({ problem, messages, code, hintsRevealed });
+  if (validationErrors.length > 0) {
+    return res.status(400).json({ error: validationErrors.join('; ') });
   }
 
   const examplesText = problem.examples?.length

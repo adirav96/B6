@@ -39,8 +39,8 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="app-header sticky top-0 z-50">
+      <div className="container-max">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function Navbar() {
                 <i className="fas fa-bell text-gray-400 text-lg hover:text-primary transition-colors"></i>
               </button>
               {notifOpen && (
-                <div className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-4 px-5 z-50">
+                <div className="absolute sm:left-0 left-2 right-2 mt-2 w-auto sm:w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-4 px-5 z-50">
                   <p className="text-sm text-gray-500 text-center">אין התראות חדשות</p>
                 </div>
               )}
@@ -98,20 +98,22 @@ export default function Navbar() {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-4 pb-4 pt-1 space-y-1 border-t border-gray-100 bg-white">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.to}
-              className={mobileLinkClass(link.to)}
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="px-3 pb-4 pt-2 space-y-2 border-t border-gray-100 bg-white card-sm">
+          <div className="stack-mobile">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.to}
+                className={`${mobileLinkClass(link.to)} w-full text-left`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </nav>

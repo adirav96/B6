@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
+import { sendError } from '../utils/response.js';
 
 export default function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'אין הרשאה — נא להתחבר' });
+    return sendError(res, 401, 'אין הרשאה — נא להתחבר', 'AUTH_MISSING');
   }
 
   try {
@@ -11,7 +12,7 @@ export default function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
     next();
-  } catch {
-    return res.status(401).json({ error: 'טוקן לא תקין — נא להתחבר מחדש' });
+  } catch (err) {
+    return sendError(res, 401, 'טוקן לא תקין — נא להתחבר מחדש', 'AUTH_INVALID');
   }
 }

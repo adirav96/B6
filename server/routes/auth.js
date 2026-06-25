@@ -5,6 +5,7 @@ import auth from '../middleware/auth.js';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimiter.js';
 import { validateEmail } from '../utils/validators.js';
 import { isStrongPassword, getPasswordError } from '../utils/security.js';
+import { sendError } from '../utils/response.js';
 
 const router = Router();
 
@@ -17,18 +18,18 @@ router.post('/register', registerLimiter, async (req, res) => {
     const { name, email, password, university } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'נא למלא את כל שדות החובה' });
+      return sendError(res, 400, 'נא למלא את כל שדות החובה', 'MISSING_FIELDS');
     }
     if (!isStrongPassword(password)) {
-      return res.status(400).json({ error: getPasswordError() });
+      return sendError(res, 400, getPasswordError(), 'WEAK_PASSWORD');
     }
     if (!validateEmail(email)) {
-      return res.status(400).json({ error: 'אימייל אינו תקין' });
+      return sendError(res, 400, 'אימייל אינו תקין', 'INVALID_EMAIL');
     }
 
     const existing = await usersDb.findByEmail(email);
     if (existing) {
-      return res.status(409).json({ error: 'אימייל זה כבר רשום במערכת' });
+      return sendError(res, 409, 'אימייל זה כבר רשום במערכת', 'EMAIL_EXISTS');
     }
 
     const user = await usersDb.createUser({ name, email, password, university });
@@ -37,7 +38,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     res.status(201).json({ token, user: usersDb.toProfile(user) });
   } catch (err) {
     console.error('Register error:', err);
-    res.status(500).json({ error: 'שגיאת שרת — נסו שוב מאוחר יותר' });
+    return sendError(res, 500, 'שגיאת שרת — נסו שוב מאוחר יותר', 'SERVER_ERROR');
   }
 });
 
@@ -46,33 +47,33 @@ router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'נא למלא אימייל וסיסמה' });
+      return sendError(res, 400, 'נא למלא אימייל וסיסמה', 'MISSING_FIELDS');
     }
     if (!validateEmail(email)) {
-      return res.status(400).json({ error: 'אימייל אינו תקין' });
+      return sendError(res, 400, 'אימייל אינו תקין', 'INVALID_EMAIL');
     }
 
     const user = await usersDb.findByEmail(email);
     if (!user || !(await usersDb.comparePassword(user, password))) {
-      return res.status(401).json({ error: 'אימייל או סיסמה שגויים' });
+      return sendError(res, 401, 'אימייל או סיסמה שגויים', 'INVALID_CREDENTIALS');
     }
 
     const token = signToken(user.id);
     res.json({ token, user: usersDb.toProfile(user) });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'שגיאת שרת — נסו שוב מאוחר יותר' });
+    return sendError(res, 500, 'שגיאת שרת — נסו שוב מאוחר יותר', 'SERVER_ERROR');
   }
 });
 
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await usersDb.findById(req.userId);
-    if (!user) return res.status(404).json({ error: 'משתמש לא נמצא' });
+    if (!user) return sendError(res, 404, 'משתמש לא נמצא', 'NOT_FOUND');
     res.json({ user: usersDb.toProfile(user) });
   } catch (err) {
     console.error('Me error:', err);
-    res.status(500).json({ error: 'שגיאת שרת' });
+    return sendError(res, 500, 'שגיאת שרת', 'SERVER_ERROR');
   }
 });
 

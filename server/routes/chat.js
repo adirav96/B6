@@ -5,6 +5,7 @@ import { chatLimiter } from '../middleware/rateLimiter.js';
 import { validateChatRequest } from '../utils/validators.js';
 import { escapePromptText } from '../utils/security.js';
 import { AI_CONFIG } from '../config/constants.js';
+import { sendError } from '../utils/response.js';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
 
   const validationErrors = validateChatRequest({ problem, messages, code, hintsRevealed });
   if (validationErrors.length > 0) {
-    return res.status(400).json({ error: validationErrors.join('; ') });
+    return sendError(res, 400, validationErrors.join('; '), 'VALIDATION_ERROR', validationErrors);
   }
 
   const examplesText = problem.examples?.length
@@ -65,7 +66,7 @@ ${code?.trim() ? `\nהקוד הנוכחי של המשתמש:\n\`\`\`\n${code}\n\
     res.json({ reply: response.content[0].text });
   } catch (err) {
     console.error('Anthropic API error:', err.message);
-    res.status(500).json({ error: 'שגיאה בתקשורת עם ה-AI' });
+    return sendError(res, 500, 'שגיאה בתקשורת עם ה-AI', 'AI_ERROR');
   }
 });
 

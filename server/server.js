@@ -32,7 +32,18 @@ app.use('/api/solutions', solutionsRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/chat', chatRoutes);
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', database: 'firebase' }));
+import { getDb } from './firebase.js';
+
+app.get('/api/health', async (_req, res) => {
+  try {
+    // Try a light Firestore read
+    await getDb().collection('_healthcheck').limit(1).get();
+    res.json({ status: 'ok', database: 'firebase', timestamp: new Date().toISOString() });
+  } catch (err) {
+    console.error('Health check failed:', err.message);
+    res.status(503).json({ status: 'unhealthy', error: err.message });
+  }
+});
 
 // Global error handler
 app.use(errorHandler);

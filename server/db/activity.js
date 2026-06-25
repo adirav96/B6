@@ -1,6 +1,6 @@
 import { getDb } from '../firebase.js';
 
-const COLLECTION = 'activities';
+const COLLECTION = 'activity';
 
 function docId(userId, date) {
   return `${userId}_${date}`;

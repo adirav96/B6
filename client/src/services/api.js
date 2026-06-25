@@ -23,8 +23,7 @@ async function request(path, options = {}) {
 
   if (res.status === 401) {
     setToken(null);
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+    throw new Error('UNAUTHORIZED');
   }
 
   const data = await res.json();

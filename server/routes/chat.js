@@ -4,6 +4,7 @@ import auth from '../middleware/auth.js';
 import { chatLimiter } from '../middleware/rateLimiter.js';
 import { validateChatRequest } from '../utils/validators.js';
 import { escapePromptText } from '../utils/security.js';
+import { AI_CONFIG } from '../config/constants.js';
 
 const router = Router();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -55,8 +56,8 @@ ${code?.trim() ? `\nהקוד הנוכחי של המשתמש:\n\`\`\`\n${code}\n\
 
   try {
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      model: AI_CONFIG.model,
+      max_tokens: AI_CONFIG.maxTokens,
       system: systemPrompt,
       messages: messages.map(({ role, content }) => ({ role, content })),
     });

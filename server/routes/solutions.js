@@ -19,7 +19,10 @@ router.get('/', async (req, res) => {
 
 router.post('/:problemId', async (req, res) => {
   try {
-    const problemId = Number(req.params.problemId);
+    const problemId = parseInt(req.params.problemId, 10);
+    if (isNaN(problemId) || problemId <= 0) {
+      return res.status(400).json({ error: 'Invalid problem ID' });
+    }
     const { score, timeSpent, code, testsPassed, totalTests, hintsUsed } = req.body;
 
     const validationErrors = validateSolutionData({ score, timeSpent, code, testsPassed, totalTests, hintsUsed });

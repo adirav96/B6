@@ -2,7 +2,9 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import * as usersDb from '../db/users.js';
 import auth from '../middleware/auth.js';
+import { loginLimiter, registerLimiter } from '../middleware/rateLimiter.js';
 import { validateEmail } from '../utils/validators.js';
+import { isStrongPassword, getPasswordError } from '../utils/security.js';
 
 const router = Router();
 
@@ -10,15 +12,15 @@ function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { name, email, password, university } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'נא למלא את כל שדות החובה' });
     }
-    if (password.length < 4) {
-      return res.status(400).json({ error: 'הסיסמה חייבת להכיל לפחות 4 תווים' });
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({ error: getPasswordError() });
     }
     if (!validateEmail(email)) {
       return res.status(400).json({ error: 'אימייל אינו תקין' });
@@ -39,7 +41,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 

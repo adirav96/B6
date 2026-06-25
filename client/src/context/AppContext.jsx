@@ -241,7 +241,8 @@ export function AppProvider({ children }) {
           totalTests: payload.totalTests,
           hintsUsed: payload.hintsUsed,
         });
-        await apiSaveActivity();
+        const today = new Date().toISOString().split('T')[0];
+        await apiSaveActivity(today);
       } catch (err) {
         console.error('Failed to save to server:', err);
       }
@@ -366,7 +367,6 @@ export function AppProvider({ children }) {
     getStats,
     getTopicMastery,
     getRecentActivity,
-    getDifficultyBreakdown,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 export default function ActivityGrid({ activityLog = [], count = 28 }) {
-  const colors = ['bg-gray-200', 'bg-green-200', 'bg-green-400', 'bg-green-600'];
+  const colors = ['bg-gray-200 dark:bg-gray-600', 'bg-green-200 dark:bg-green-800', 'bg-green-400 dark:bg-green-600', 'bg-green-600 dark:bg-green-400'];
 
   const cells = useMemo(() => {
     const today = new Date();

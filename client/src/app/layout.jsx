@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="bg-gray-50 min-h-screen">
+      <body className="bg-gray-50 min-h-screen overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>

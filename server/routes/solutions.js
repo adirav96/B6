@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import * as solutionsDb from '../db/solutions.js';
 import auth from '../middleware/auth.js';
+import { validateSolutionData } from '../utils/validators.js';
+import { sendError } from '../utils/response.js';
 
 const router = Router();
 
@@ -12,14 +14,22 @@ router.get('/', async (req, res) => {
     res.json({ solutions });
   } catch (err) {
     console.error('Get solutions error:', err);
-    res.status(500).json({ error: 'שגיאת שרת' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
 router.post('/:problemId', async (req, res) => {
   try {
-    const problemId = Number(req.params.problemId);
+    const problemId = parseInt(req.params.problemId, 10);
+    if (isNaN(problemId) || problemId <= 0) {
+      return sendError(res, 400, 'Invalid problem ID', 'INVALID_PROBLEM_ID');
+    }
     const { score, timeSpent, code, testsPassed, totalTests, hintsUsed } = req.body;
+
+    const validationErrors = validateSolutionData({ score, timeSpent, code, testsPassed, totalTests, hintsUsed });
+    if (validationErrors.length > 0) {
+      return sendError(res, 400, validationErrors.join('; '), 'VALIDATION_ERROR', validationErrors);
+    }
 
     const solution = await solutionsDb.upsert(req.userId, problemId, {
       score,
@@ -43,7 +53,7 @@ router.post('/:problemId', async (req, res) => {
     });
   } catch (err) {
     console.error('Save solution error:', err);
-    res.status(500).json({ error: 'שגיאת שרת' });
+    return sendError(res, 500, 'Server error', 'SERVER_ERROR');
   }
 });
 

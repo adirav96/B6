@@ -1,6 +1,6 @@
 import { getDb } from '../firebase.js';
 
-const COLLECTION = 'activities';
+const COLLECTION = 'activity';
 
 function docId(userId, date) {
   return `${userId}_${date}`;
@@ -21,17 +21,20 @@ export async function increment(userId, date) {
   const dateStr = date || new Date().toISOString().split('T')[0];
   const ref = getDb().collection(COLLECTION).doc(docId(userId, dateStr));
 
-  await getDb().runTransaction(async (tx) => {
+  const result = await getDb().runTransaction(async (tx) => {
     const doc = await tx.get(ref);
+    let newCount;
 
     if (doc.exists) {
-      tx.update(ref, { count: doc.data().count + 1 });
+      newCount = doc.data().count + 1;
+      tx.update(ref, { count: newCount });
     } else {
+      newCount = 1;
       tx.set(ref, { userId, date: dateStr, count: 1 });
     }
+
+    return { date: dateStr, count: newCount };
   });
 
-  const saved = await ref.get();
-  const data = saved.data();
-  return { date: data.date, count: data.count };
+  return result;
 }

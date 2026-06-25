@@ -50,3 +50,7 @@ export async function createUser({ name, email, password, university }) {
 export async function comparePassword(user, candidatePassword) {
   return bcrypt.compare(candidatePassword, user.password);
 }
+
+// Alias exports for standardized naming
+export const getByEmail = findByEmail;
+export const getById = findById;

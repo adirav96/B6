@@ -1,7 +1,6 @@
-//talks to the server
 const TOKEN_KEY = 'codeinterview-token';
 
-function getToken() {
+export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
@@ -14,22 +13,39 @@ export function hasToken() {
   return !!getToken();
 }
 
-async function request(path, options = {}) {
+// retries handle Firebase cold-start latency on first request after idle
+async function request(path, options = {}, retries = 2) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      // back off progressively: 0s, 1s, 2s
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * attempt));
 
-  if (res.status === 401) {
-    setToken(null);
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+      const res = await fetch(`/api${path}`, { ...options, headers });
+
+      if (res.status === 401) {
+        setToken(null);
+        throw new Error('UNAUTHORIZED');
+      }
+
+      // non-JSON usually means the proxy returned an error page
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('NOT_JSON');
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Server error');
+      return data;
+    } catch (err) {
+      if (err.message === 'UNAUTHORIZED') throw err;
+      lastError = err;
+    }
   }
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'שגיאת שרת');
-  return data;
+  throw new Error('Server unavailable, please try again');
 }
 
 export async function apiRegister(name, email, password, university) {

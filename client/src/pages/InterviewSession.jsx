@@ -19,6 +19,7 @@ export default function InterviewSession() {
   const problem = getProblemById(parseInt(problemId));
   const {
     session,
+    solutions,
     startSession,
     updateSessionCode,
     addChatMessage,
@@ -30,6 +31,32 @@ export default function InterviewSession() {
 
   const [activeTab, setActiveTab] = useState('problem');
   const [elapsed, setElapsed] = useState(0);
+
+  // Simulation mode
+  const [simSession, setSimSession] = useState(null);
+  const [simTimeLeft, setSimTimeLeft] = useState(0);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('simulation_session');
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.problemIds.includes(parseInt(problemId))) {
+        setSimSession(s);
+        const elapsed = Math.floor((Date.now() - s.startTime) / 1000);
+        setSimTimeLeft(Math.max(0, 45 * 60 - elapsed));
+      }
+    } catch {}
+  }, [problemId]);
+
+  useEffect(() => {
+    if (!simSession) return;
+    const id = setInterval(() => {
+      const el = Math.floor((Date.now() - simSession.startTime) / 1000);
+      setSimTimeLeft(Math.max(0, 45 * 60 - el));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [simSession]);
   const [chatInput, setChatInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [runLoading, setRunLoading] = useState(false);
@@ -82,7 +109,13 @@ export default function InterviewSession() {
     addChatMessage('user', text);
     setAiLoading(true);
     try {
-      const response = await getAiResponse(problem, text, session.code, session.hintsRevealed);
+      const response = await getAiResponse(
+        problem,
+        text,
+        session.code,
+        session.hintsRevealed,
+        session.chatMessages
+      );
       addChatMessage('ai', response);
     } catch {
       addChatMessage('ai', 'מצטער, קרתה שגיאה. נסה שוב.');
@@ -120,6 +153,7 @@ export default function InterviewSession() {
       const totalTests = result.results.length;
       const timeSpent = Math.floor((Date.now() - session.startTime) / 1000);
       const timeMinutes = timeSpent / 60;
+      // score = 70% from tests + up to 30 speed bonus - 5 per hint used, capped [0,100]
       const timeBonus = Math.max(0, 30 - Math.floor(timeMinutes));
       const hintPenalty = (session.hintsRevealed?.length || 0) * 5;
       const score = Math.max(0, Math.min(100, Math.round((testsPassed / totalTests) * 70 + timeBonus - hintPenalty)));
@@ -147,13 +181,64 @@ export default function InterviewSession() {
     `flex-1 py-3 text-sm font-medium transition-colors ${
       activeTab === tab
         ? 'text-primary border-b-2 border-primary bg-primary/5'
-        : 'text-gray-500 hover:text-gray-700'
+        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
     }`;
 
+  const simUrgent = simTimeLeft < 300;
+  const simMinutes = String(Math.floor(simTimeLeft / 60)).padStart(2, '0');
+  const simSeconds = String(simTimeLeft % 60).padStart(2, '0');
+
   return (
-    <div className="h-[calc(100vh-4rem)] flex">
-      <div className="w-full lg:w-2/5 flex flex-col border-l border-gray-200 bg-white">
-        <div className="flex border-b border-gray-200">
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-x-hidden">
+
+      {/* Simulation bar */}
+      {simSession && (
+        <div className="flex items-center justify-between bg-gray-900 border-b border-gray-700 px-4 py-2 flex-shrink-0 gap-3">
+          {/* Timer */}
+          <div className={`flex items-center gap-2 font-mono font-bold text-sm tabular-nums flex-shrink-0 ${simUrgent ? 'text-red-400 animate-pulse' : 'text-primary'}`}>
+            <i className={`fas fa-clock text-xs ${simUrgent ? 'text-red-400' : 'text-primary'}`}></i>
+            {simMinutes}:{simSeconds}
+          </div>
+
+          {/* Problem tabs */}
+          <div className="flex gap-1.5 overflow-x-auto">
+            {simSession.problemIds.map((id, idx) => {
+              const p = getProblemById(id);
+              const solved = solutions[id]?.score >= 50;
+              const isCurrent = id === parseInt(problemId);
+              return (
+                <button
+                  key={id}
+                  onClick={() => router.push(`/session/${id}`)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                    isCurrent
+                      ? 'bg-primary text-white'
+                      : solved
+                      ? 'bg-emerald-700 text-white hover:bg-emerald-600'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {solved && <i className="fas fa-check ml-1 text-[10px]"></i>}
+                  {idx + 1}. {p?.titleHe || `שאלה ${idx + 1}`}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Back to simulation */}
+          <button
+            onClick={() => router.push('/simulation')}
+            className="text-gray-400 hover:text-white text-xs flex items-center gap-1 flex-shrink-0 transition-colors"
+          >
+            <i className="fas fa-th-large text-[10px]"></i>
+            סימולציה
+          </button>
+        </div>
+      )}
+
+    <div className="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0">
+      <div className="w-full lg:w-2/5 flex flex-col border-b lg:border-b-0 lg:border-l border-purple-200 dark:border-gray-700 bg-purple-50 dark:bg-gray-800 min-h-0 min-w-0 h-[45vh] lg:h-auto lg:flex-shrink-0">
+        <div className="flex border-b border-purple-200 dark:border-gray-700">
           <button onClick={() => setActiveTab('problem')} className={tabClass('problem')}>
             <i className="fas fa-file-alt ml-1"></i> שאלה
           </button>
@@ -172,11 +257,11 @@ export default function InterviewSession() {
               <span className="text-xs text-gray-400">|</span>
               <span className="text-xs text-gray-500">{problem.topic}</span>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">{problem.titleHe}</h2>
-            <div className="text-gray-700 space-y-4 text-sm">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{problem.titleHe}</h2>
+            <div className="text-gray-700 dark:text-gray-200 space-y-4 text-sm">
               <p>{problem.descriptionHe}</p>
               {problem.examples.map((ex, idx) => (
-                <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div key={idx} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <h4 className="font-semibold text-gray-900 mb-2">דוגמה {idx + 1}:</h4>
                   <p className="font-mono text-sm">
                     <strong>Input:</strong> {ex.input}<br />
@@ -186,7 +271,7 @@ export default function InterviewSession() {
                 </div>
               ))}
               {problem.constraints && problem.constraints.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                   <h4 className="font-semibold text-blue-900 mb-2">אילוצים:</h4>
                   <ul className="text-sm text-blue-800 space-y-1 list-disc pr-4">
                     {problem.constraints.map((c, idx) => (
@@ -200,8 +285,8 @@ export default function InterviewSession() {
         )}
 
         {activeTab === 'chat' && (
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
               {(session?.chatMessages || []).map((msg, idx) => (
                 <ChatBubble key={idx} message={msg} />
               ))}
@@ -221,12 +306,12 @@ export default function InterviewSession() {
               )}
               <div ref={chatEndRef} />
             </div>
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-purple-200 dark:border-gray-700">
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="שאלו את המראיין..."
-                  className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="flex-1 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -246,7 +331,7 @@ export default function InterviewSession() {
 
         {activeTab === 'hints' && (
           <div className="flex-1 overflow-y-auto p-6">
-            <h3 className="font-bold text-gray-900 mb-4">רמזים</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4">רמזים</h3>
             <div className="space-y-3">
               {(problem.hints || []).map((hint, idx) => (
                 <HintItem
@@ -262,8 +347,8 @@ export default function InterviewSession() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col bg-gray-900">
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700">
+      <div className="flex-1 flex flex-col bg-gray-900 min-w-0 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-3">
             <select className="bg-gray-700 text-gray-200 text-sm rounded-lg px-3 py-1.5 border-none focus:ring-2 focus:ring-primary">
               <option>Python 3</option>
@@ -281,23 +366,26 @@ export default function InterviewSession() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto">
-          <SimpleCodeEditor
-            value={code}
-            onValueChange={updateSessionCode}
-            highlight={(c) => Prism.highlight(c, Prism.languages.python, 'python')}
-            padding={24}
-            spellCheck={false}
-            style={{
-              fontFamily: '"Fira Code", "Fira Mono", monospace',
-              fontSize: 14,
-              lineHeight: 1.6,
-              backgroundColor: '#1e1e1e',
-              color: '#d4d4d4',
-              minHeight: '100%',
-              direction: 'ltr',
-            }}
-          />
+        <div className="flex-1 relative overflow-hidden">
+          <div className="absolute inset-0 overflow-auto" dir="ltr">
+            <SimpleCodeEditor
+              value={code}
+              onValueChange={updateSessionCode}
+              highlight={(c) => Prism.highlight(c, Prism.languages.python, 'python')}
+              padding={24}
+              spellCheck={false}
+              style={{
+                fontFamily: '"Fira Code", "Fira Mono", monospace',
+                fontSize: 14,
+                lineHeight: 1.6,
+                backgroundColor: '#1e1e1e',
+                color: '#d4d4d4',
+                minHeight: '100%',
+                minWidth: '100%',
+                direction: 'ltr',
+              }}
+            />
+          </div>
         </div>
 
         <div className="bg-gray-800 border-t border-gray-700 px-4 py-3">
@@ -331,7 +419,7 @@ export default function InterviewSession() {
           {session?.testResults && (
             <div className="mt-3 bg-gray-900 rounded-lg p-3">
               <div className="text-xs font-medium text-gray-400 mb-2">תוצאות בדיקה:</div>
-              <div className="space-y-1.5 text-xs font-mono" dir="ltr">
+              <div className="space-y-1.5 text-xs font-mono overflow-x-auto" dir="ltr">
                 {session.testResults.results.map((r, idx) => (
                   <div key={idx} className={`flex items-center gap-2 ${r.passed ? 'text-green-400' : 'text-red-400'}`}>
                     <i className={`fas ${r.passed ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
@@ -347,6 +435,7 @@ export default function InterviewSession() {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -361,9 +450,9 @@ function HintItem({ hint, index, revealed, onReveal }) {
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <button onClick={handleClick} className="w-full text-right p-4 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors">
-        <span className="font-medium text-sm text-gray-700">
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+      <button onClick={handleClick} className="w-full text-right p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors">
+        <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
           {revealed ? hint.title : <><i className="fas fa-lock ml-1 text-gray-400"></i> רמז {index + 1}</>}
         </span>
         {revealed ? (
@@ -372,7 +461,7 @@ function HintItem({ hint, index, revealed, onReveal }) {
           <span className="text-xs text-primary font-medium">לחץ לחשיפה</span>
         )}
       </button>
-      {revealed && open && <div className="p-4 text-sm text-gray-600">{hint.content}</div>}
+      {revealed && open && <div className="p-4 text-sm text-gray-600 dark:text-gray-300">{hint.content}</div>}
     </div>
   );
 }

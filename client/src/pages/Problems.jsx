@@ -38,8 +38,8 @@ export default function Problems() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">בנק שאלות</h1>
-          <p className="text-gray-500 mt-1">{PROBLEMS_DATA.length}+ שאלות בנושאי קידוד נפוצים בראיונות</p>
+          <h1 className="text-2xl font-bold text-purple-900 dark:text-white">בנק שאלות</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{PROBLEMS_DATA.length}+ שאלות בנושאי קידוד נפוצים בראיונות</p>
         </div>
         <div className="relative">
           <input
@@ -47,25 +47,25 @@ export default function Problems() {
             placeholder="חיפוש שאלה..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-64"
+            className="bg-white dark:bg-gray-700 border border-purple-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-64"
           />
           <i className="fas fa-search absolute right-3 top-3 text-gray-400 text-sm"></i>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="bg-purple-50 dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-gray-700 p-4 mb-6">
         <div className="flex flex-wrap gap-3">
-          <select value={topicFilter} onChange={e => setTopicFilter(e.target.value)} className="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+          <select value={topicFilter} onChange={e => setTopicFilter(e.target.value)} className="border border-purple-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
             <option value="">כל הנושאים</option>
             {topics.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <select value={difficultyFilter} onChange={e => setDifficultyFilter(e.target.value)} className="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+          <select value={difficultyFilter} onChange={e => setDifficultyFilter(e.target.value)} className="border border-purple-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
             <option value="">כל הרמות</option>
             <option value="easy">קל</option>
             <option value="medium">בינוני</option>
             <option value="hard">קשה</option>
           </select>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-purple-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
             <option value="">כל הסטטוסים</option>
             <option value="completed">הושלם</option>
             <option value="failed">לא עבר</option>
@@ -75,16 +75,16 @@ export default function Problems() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-purple-50 dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-gray-700 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-gray-50 dark:bg-gray-700/60 border-b border-purple-200 dark:border-gray-700">
             <tr>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">סטטוס</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">שאלה</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">נושא</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase">רמה</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">אחוז הצלחה</th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">חברות</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">סטטוס</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">שאלה</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase hidden md:table-cell">נושא</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">רמה</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase hidden lg:table-cell">אחוז הצלחה</th>
+              <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase hidden lg:table-cell">חברות</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

@@ -30,15 +30,15 @@ export default function Landing() {
               onClick={() => router.push('/login')}
               className="bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all transform hover:scale-105 shadow-lg"
             >
-              <i className="fas fa-rocket ml-2"></i>
-              התחילו לתרגל בחינם
+              <i className="fas fa-sign-in-alt ml-2"></i>
+              התחברות
             </button>
             <button
-              onClick={scrollToFeatures}
+              onClick={() => router.push('/register')}
               className="border-2 border-indigo-400 text-indigo-200 hover:bg-indigo-800 font-bold py-4 px-8 rounded-xl text-lg transition-all"
             >
-              <i className="fas fa-play-circle ml-2"></i>
-              צפו בהדגמה
+              <i className="fas fa-user-plus ml-2"></i>
+              הרשמה
             </button>
           </div>
         </div>

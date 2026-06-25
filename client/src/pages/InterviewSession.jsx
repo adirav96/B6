@@ -82,7 +82,13 @@ export default function InterviewSession() {
     addChatMessage('user', text);
     setAiLoading(true);
     try {
-      const response = await getAiResponse(problem, text, session.code, session.hintsRevealed);
+      const response = await getAiResponse(
+        problem,
+        text,
+        session.code,
+        session.hintsRevealed,
+        session.chatMessages
+      );
       addChatMessage('ai', response);
     } catch {
       addChatMessage('ai', 'מצטער, קרתה שגיאה. נסה שוב.');

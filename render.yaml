@@ -1,0 +1,18 @@
+services:
+  - type: web_service
+    name: codeinterview-backend
+    env: node
+    region: oregon
+    branch: main
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+
+  - type: web_service
+    name: codeinterview-frontend
+    env: node
+    region: oregon
+    branch: main
+    rootDir: client
+    buildCommand: npm install && npm run build
+    startCommand: npm run start

@@ -1,0 +1,113 @@
+Deployment Plan for CodeInterview
+===============================
+
+Chosen setup:
+- Frontend: Vercel
+- Backend: Render (or another host that supports Node/Express with Firebase Admin)
+
+Files already added:
+- client/vercel.json
+- server/Procfile
+
+---
+
+1. Backend deployment (Render)
+-----------------------------
+
+Server folder: CodeInterview/CodeInterview/server
+
+Render settings:
+- Root directory: server
+- Build command: npm install
+- Start command: npm start
+- Environment: Node 18+ (or latest stable)
+
+Required environment variables:
+- JWT_SECRET
+- ANTHROPIC_API_KEY
+- FIREBASE_PROJECT_ID
+- FIREBASE_CLIENT_EMAIL
+- FIREBASE_PRIVATE_KEY
+
+Optional alternative backend credential variables:
+- FIREBASE_SERVICE_ACCOUNT_JSON
+- FIREBASE_SERVICE_ACCOUNT_PATH
+
+Notes:
+- FIREBASE_PRIVATE_KEY must preserve newlines as literal \n sequences inside the env value.
+  Example:
+  -----BEGIN PRIVATE KEY-----\nABC...\n-----END PRIVATE KEY-----\n
+- The backend uses Firebase Admin SDK in server/firebase.js.
+- Once deployed, copy the backend URL, for example: https://my-backend.onrender.com
+
+---
+
+2. Frontend deployment (Vercel)
+-------------------------------
+
+Frontend folder: CodeInterview/CodeInterview/client
+
+Vercel settings:
+- Root directory: client
+- Framework preset: Next.js
+- Build command: npm run build
+- Development command: npm run dev (for local testing)
+- Output directory: default Next.js output
+
+Required environment variables on Vercel:
+- API_URL = https://your-backend-url
+- NEXT_PUBLIC_FIREBASE_API_KEY
+- NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+- NEXT_PUBLIC_FIREBASE_DATABASE_URL
+- NEXT_PUBLIC_FIREBASE_PROJECT_ID
+- NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+- NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+- NEXT_PUBLIC_FIREBASE_APP_ID
+- NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+
+Notes:
+- client/next.config.mjs rewrites /api/* to `${process.env.API_URL}/api/:path*`.
+- Make sure API_URL points to the deployed backend URL.
+
+---
+
+3. Local prep steps
+-------------------
+
+From the root:
+- cd server
+- npm install
+- npm start
+
+- cd ../client
+- npm install
+- npm run dev
+
+Verify locally before deployment:
+- Client loads correctly on http://localhost:3000
+- Backend API available on http://localhost:5000/api/health
+- Login/register works
+- AI chat works with /api/chat
+- Code execution and submit flow work
+
+---
+
+4. Deployment checklist
+-----------------------
+
+[ ] Deploy backend service with `server` folder
+[ ] Configure backend env vars
+[ ] Deploy frontend service with `client` folder
+[ ] Configure frontend env vars, including API_URL
+[ ] Test public Vercel URL
+[ ] Confirm /api calls route to backend
+[ ] Confirm login and AI chat work
+
+---
+
+5. Helpful notes
+----------------
+
+- `client/vercel.json` is configured for Next.js deployment.
+- `server/Procfile` is ready for hosts that use Procfile styles.
+- If you want, I can also generate a `README_DEPLOYMENT.md` or a `render.yaml` file.

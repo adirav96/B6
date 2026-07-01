@@ -68,7 +68,8 @@ export default function InterviewSession() {
     if (!problem || initializedRef.current) return;
     initializedRef.current = true;
     const initialMsg = [{ role: 'ai', content: getInitialMessage(problem) }];
-    startSession(problem.id, problem.starterCode.python, initialMsg);
+    const existingCode = solutions[problem.id]?.code;
+    startSession(problem.id, existingCode || problem.starterCode.python, initialMsg);
   }, [problem]);
 
   useEffect(() => {

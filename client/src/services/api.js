@@ -38,10 +38,15 @@ async function request(path, options = {}, retries = 2) {
         throw new Error('NOT_JSON');
       }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Server error');
+      if (!res.ok) {
+        const err = new Error(data.error || 'Server error');
+        err.status = res.status;
+        throw err;
+      }
       return data;
     } catch (err) {
       if (err.message === 'UNAUTHORIZED') throw err;
+      if (err.status && err.status < 500) throw err; // don't retry client errors (4xx)
       lastError = err;
     }
   }

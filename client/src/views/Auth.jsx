@@ -42,7 +42,10 @@ export default function Auth({ initialMode = 'login' }) {
       }
     } else {
       if (!name || !email || !password) { setError('נא למלא את כל שדות החובה'); return; }
-      if (password.length < 4) { setError('הסיסמה חייבת להכיל לפחות 4 תווים'); return; }
+      if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+        setError('Password must be at least 8 characters and include uppercase, lowercase, and a number');
+        return;
+      }
       setSubmitting(true);
       const result = await register(name, email, password, university || '');
       setSubmitting(false);
@@ -121,6 +124,9 @@ export default function Auth({ initialMode = 'login' }) {
                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 dir="ltr"
               />
+              {mode === 'register' && (
+                <p className="text-xs text-gray-400 mt-1">Min 8 chars, uppercase, lowercase, and a number</p>
+              )}
             </div>
 
             {mode === 'login' && (

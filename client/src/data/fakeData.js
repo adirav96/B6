@@ -14,7 +14,6 @@ export const STATUS_MAP = {
 export function getAchievements(solutions, activityLog) {
   const solArr = Object.values(solutions || {});
   const totalSolved = solArr.length;
-
   let streak = 0;
   const check = new Date();
   check.setHours(0, 0, 0, 0);

@@ -148,7 +148,7 @@ export default function Dashboard() {
               <i className="fas fa-calendar"></i>
               <span>יום רביעי, 21.05 בשעה 18:00</span>
             </div>
-            <button className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all w-full">
+            <button onClick={() => router.push('/simulation')} className="bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all w-full">
               הכנה לראיון
             </button>
           </div>

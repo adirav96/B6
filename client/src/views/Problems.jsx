@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProblemRow from '@/components/ProblemRow';
 import { PROBLEMS_DATA } from '@/data/problemsData';
 import { useApp } from '@/context/AppContext';
@@ -14,8 +15,9 @@ function getStatus(problemId, solutions, session) {
 
 export default function Problems() {
   const { solutions, session } = useApp();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
-  const [topicFilter, setTopicFilter] = useState('');
+  const [topicFilter, setTopicFilter] = useState(searchParams.get('topic') || '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 

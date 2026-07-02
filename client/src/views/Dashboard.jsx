@@ -129,7 +129,7 @@ export default function Dashboard() {
               {weakTopics.map((topic, idx) => {
                 const style = getTopicStyle(topic.percent);
                 return (
-                  <div key={idx} className={`flex items-center gap-3 p-3 ${style.bg} rounded-lg`}>
+                  <div key={idx} onClick={() => router.push(`/problems?topic=${encodeURIComponent(topic.topic)}`)} className={`flex items-center gap-3 p-3 ${style.bg} rounded-lg cursor-pointer hover:opacity-80 transition-opacity`}>
                     <i className={`${style.icon} ${style.iconColor}`}></i>
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{topic.topic}</div>

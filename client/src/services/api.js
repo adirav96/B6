@@ -100,6 +100,41 @@ export async function apiGetProblem(problemId, { includeTests = false } = {}) {
   return request(`/problems/${problemId}${suffix}`);
 }
 
+export async function apiGetAdminUsers() {
+  return request('/admin/users');
+}
+
+export async function apiSetUserAdmin(userId, isAdmin) {
+  return request(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isAdmin }),
+  });
+}
+
+export async function apiGetAdminProblems() {
+  return request('/admin/problems');
+}
+
+export async function apiCreateAdminProblem(problem) {
+  return request('/admin/problems', {
+    method: 'POST',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiUpdateAdminProblem(problemId, problem) {
+  return request(`/admin/problems/${problemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiDeleteAdminProblem(problemId) {
+  return request(`/admin/problems/${problemId}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function apiSaveActivity(date) {
   return request('/activity', {
     method: 'POST',

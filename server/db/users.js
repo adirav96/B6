@@ -10,6 +10,7 @@ export function toProfile(user) {
     email: user.email,
     university: user.university || '',
     joinDate: user.joinDate,
+    isAdmin: !!user.isAdmin,
   };
 }
 
@@ -41,6 +42,7 @@ export async function createUser({ name, email, password, university }) {
     password: hashedPassword,
     university: university || '',
     joinDate: new Date().toISOString().split('T')[0],
+    isAdmin: false,
   };
 
   const ref = await getDb().collection(COLLECTION).add(data);
@@ -49,6 +51,16 @@ export async function createUser({ name, email, password, university }) {
 
 export async function comparePassword(user, candidatePassword) {
   return bcrypt.compare(candidatePassword, user.password);
+}
+
+export async function getAll() {
+  const snap = await getDb().collection(COLLECTION).get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function updateRole(userId, isAdmin) {
+  await getDb().collection(COLLECTION).doc(userId).set({ isAdmin: !!isAdmin }, { merge: true });
+  return findById(userId);
 }
 
 // Alias exports for standardized naming

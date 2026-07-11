@@ -2,6 +2,17 @@ import { getDb } from '../firebase.js';
 
 const COLLECTION = 'problems';
 
+function serializeProblem(problem) {
+    const { testCases, ...rest } = problem;
+    const data = {
+        ...rest,
+        order: problem.order ?? Number(problem.id),
+        id: Number(problem.id),
+        testCasesJson: JSON.stringify(testCases || []),
+    };
+    return data;
+}
+
 function normalizeProblem(doc) {
     const data = doc.data();
     let testCases = data.testCases;
@@ -34,11 +45,7 @@ export async function upsert(problem) {
         throw new Error('Problem id is required');
     }
 
-    const data = {
-        ...problem,
-        id: Number(id),
-        order: problem.order ?? Number(id),
-    };
+    const data = serializeProblem({ ...problem, id: Number(id), order: problem.order ?? Number(id) });
 
     await getDb().collection(COLLECTION).doc(String(id)).set(data, { merge: true });
     return data;
@@ -51,12 +58,12 @@ export async function replaceAll(problems) {
         if (id === undefined || id === null) {
             throw new Error('Problem id is required');
         }
-        const data = {
-            ...problem,
-            id: Number(id),
-            order: problem.order ?? Number(id),
-        };
+        const data = serializeProblem({ ...problem, id: Number(id), order: problem.order ?? Number(id) });
         batch.set(getDb().collection(COLLECTION).doc(String(id)), data, { merge: true });
     });
     await batch.commit();
+}
+
+export async function remove(id) {
+    await getDb().collection(COLLECTION).doc(String(id)).delete();
 }

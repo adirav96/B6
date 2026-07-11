@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import solutionsRoutes from './routes/solutions.js';
 import activityRoutes from './routes/activity.js';
 import problemsRoutes from './routes/problems.js';
+import adminRoutes from './routes/admin.js';
 import chatRoutes from './routes/chat.js';
 import runRoutes from './routes/run.js';
 
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/problems', problemsRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/run', runRoutes);
 

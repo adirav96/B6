@@ -38,6 +38,7 @@ export default function Navbar() {
     { to: '/problems', label: 'שאלות' },
     { to: '/simulation', label: 'סימולציית ראיון' },
     { to: '/progress', label: 'התקדמות' },
+     ...(user?.isAdmin ? [{ to: '/admin', label: 'הגדרות מנהל' }] : []),
   ];
 
   return (

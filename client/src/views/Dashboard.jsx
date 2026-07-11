@@ -5,20 +5,21 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import StatsCard from '@/components/StatsCard';
 import { useApp } from '@/context/AppContext';
-import { PROBLEMS_DATA } from '@/data/problemsData';
 import { DIFFICULTY_MAP } from '@/data/fakeData';
+import { useProblems } from '@/hooks/useProblems';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, solutions, getStats, getRecentActivity, getTopicMastery } = useApp();
+  const { problems, loading } = useProblems();
 
   const stats = getStats();
-  const recentActivity = getRecentActivity(PROBLEMS_DATA, 4);
+  const recentActivity = getRecentActivity(problems, 4);
   const weakTopics = useMemo(() => {
-    return getTopicMastery(PROBLEMS_DATA)
+    return getTopicMastery(problems)
       .sort((a, b) => a.percent - b.percent)
       .slice(0, 3);
-  }, [getTopicMastery]);
+  }, [getTopicMastery, problems]);
 
   // count solutions submitted since the start of the current week (Sunday midnight)
   const weeklyCount = useMemo(() => {
@@ -33,6 +34,14 @@ export default function Dashboard() {
   const weeklyGoal = 10;
   const weeklyPercent = Math.min(Math.round((weeklyCount / weeklyGoal) * 100), 100);
   const remaining = Math.max(weeklyGoal - weeklyCount, 0);
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+      </div>
+    );
+  }
 
   function getActivityStyle(score) {
     if (score >= 80) return { icon: 'fas fa-check', iconBg: 'bg-green-100 dark:bg-green-900/30', iconColor: 'text-green-600', badgeBg: 'bg-green-100 dark:bg-green-900/30', badgeColor: 'text-green-700 dark:text-green-400', statusLabel: `הושלם - ${score}%` };
@@ -141,7 +150,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-primary to-purple-600 rounded-xl p-6 text-white">
+          <div className="bg-linear-to-br from-primary to-purple-600 rounded-xl p-6 text-white">
             <h3 className="font-bold mb-3">ראיון מתוזמן</h3>
             <p className="text-indigo-100 text-sm mb-4">סימולציית ראיון מלאה - 45 דקות</p>
             <div className="flex items-center gap-2 text-sm text-indigo-200 mb-4">

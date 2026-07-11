@@ -8,6 +8,7 @@ import { requestLogger } from './middleware/logger.js';
 import authRoutes from './routes/auth.js';
 import solutionsRoutes from './routes/solutions.js';
 import activityRoutes from './routes/activity.js';
+import problemsRoutes from './routes/problems.js';
 import chatRoutes from './routes/chat.js';
 import runRoutes from './routes/run.js';
 
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/solutions', solutionsRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/problems', problemsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/run', runRoutes);
 

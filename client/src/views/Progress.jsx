@@ -3,13 +3,14 @@
 import { useMemo } from 'react';
 import ActivityGrid from '@/components/ActivityGrid';
 import { useApp } from '@/context/AppContext';
-import { PROBLEMS_DATA } from '@/data/problemsData';
+import { useProblems } from '@/hooks/useProblems';
 
 export default function Progress() {
   const { solutions, activityLog, getTopicMastery, getDifficultyBreakdown } = useApp();
+  const { problems, loading } = useProblems();
 
-  const difficulty = getDifficultyBreakdown(PROBLEMS_DATA);
-  const topicMastery = getTopicMastery(PROBLEMS_DATA);
+  const difficulty = getDifficultyBreakdown(problems);
+  const topicMastery = getTopicMastery(problems);
 
   // need at least 2 submissions for the averages to be meaningful
   const aiScores = useMemo(() => {
@@ -49,6 +50,14 @@ export default function Progress() {
     if (imp.length === 0) imp.push('המשך לתרגל באופן עקבי');
     return { strengths: s, improvements: imp };
   }, [solutions, topicMastery]);
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+      </div>
+    );
+  }
 
   function diffBar(label, colorLabel, colorBar, data) {
     const pct = data.total > 0 ? Math.round((data.solved / data.total) * 100) : 0;

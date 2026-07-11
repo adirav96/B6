@@ -90,6 +90,16 @@ export async function apiGetActivity() {
   return request('/activity');
 }
 
+export async function apiGetProblems({ includeTests = false } = {}) {
+  const suffix = includeTests ? '?includeTests=true' : '';
+  return request(`/problems${suffix}`);
+}
+
+export async function apiGetProblem(problemId, { includeTests = false } = {}) {
+  const suffix = includeTests ? '?includeTests=true' : '';
+  return request(`/problems/${problemId}${suffix}`);
+}
+
 export async function apiSaveActivity(date) {
   return request('/activity', {
     method: 'POST',

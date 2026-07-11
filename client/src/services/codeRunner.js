@@ -1,4 +1,4 @@
-import { getToken } from './api.js';
+import { apiGetProblem, getToken } from './api.js';
 
 const JUDGE0_URL = 'https://ce.judge0.com/submissions?base64_encoded=false&wait=true';
 const PYTHON3_LANGUAGE_ID = 71;
@@ -43,12 +43,12 @@ function parseResults(stdout, stderr, testCases) {
 }
 
 // try local server first — faster, no rate limits, real CPython
-async function runLocal(code, testCases, functionName) {
+async function runLocal(code, problemId, functionName) {
   const token = getToken();
   const res = await fetch('/api/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ code, testCases, functionName }),
+    body: JSON.stringify({ code, problemId, functionName }),
   });
   if (res.status === 503) throw new Error('LOCAL_UNAVAILABLE');
   if (!res.ok) throw new Error('LOCAL_ERROR');
@@ -89,15 +89,15 @@ async function runJudge0(code, testCases, functionName) {
   return parseResults(stdout, stderr, testCases);
 }
 
-export async function runCode(code, testCases, functionName) {
+export async function runCode(code, problemId, functionName) {
   try {
     // prefer local Express server — same harness, real CPython, no external dependency
-    return await runLocal(code, testCases, functionName);
+    return await runLocal(code, problemId, functionName);
   } catch (localErr) {
     if (localErr.name === 'AbortError') {
       return {
         success: false,
-        results: testCases.map((tc, i) => ({ id: i, passed: false, error: 'Execution timed out (10s)', expected: String(tc.expected), inputs: String(tc.inputs) })),
+        results: [],
         stdout: '', stderr: 'Execution timed out',
       };
     }
@@ -105,13 +105,14 @@ export async function runCode(code, testCases, functionName) {
   }
 
   try {
-    return await runJudge0(code, testCases, functionName);
+    const { problem } = await apiGetProblem(problemId, { includeTests: true });
+    return await runJudge0(code, problem.testCases || [], functionName);
   } catch (error) {
     const isTimeout = error.name === 'AbortError';
     const message = isTimeout ? 'Execution timed out (15s)' : `Error: ${error.message}`;
     return {
       success: false,
-      results: testCases.map((tc, i) => ({ id: i, passed: false, error: message, expected: String(tc.expected), inputs: String(tc.inputs) })),
+      results: [],
       stdout: '', stderr: message,
     };
   }

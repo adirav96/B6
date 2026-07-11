@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { PROBLEMS_DATA } from '@/data/problemsData';
 import { useApp } from '@/context/AppContext';
+import { useProblems } from '@/hooks/useProblems';
 
 const DURATION = 45 * 60;
 const STORAGE_KEY = 'simulation_session';
@@ -43,6 +43,7 @@ const DIFFICULTY_COLOR = {
 export default function Simulation() {
   const router = useRouter();
   const { solutions } = useApp();
+  const { problems: allProblems, loading } = useProblems();
   const [problems, setProblems] = useState([]);
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [started, setStarted] = useState(false);
@@ -50,17 +51,18 @@ export default function Simulation() {
 
   // Load or create session
   useEffect(() => {
+    if (loading || allProblems.length === 0) return;
     const existing = loadSession();
     if (existing) {
-      const probs = existing.problemIds.map((id) => PROBLEMS_DATA.find((p) => p.id === id)).filter(Boolean);
+      const probs = existing.problemIds.map((id) => allProblems.find((p) => p.id === id)).filter(Boolean);
       setProblems(probs);
       const elapsed = Math.floor((Date.now() - existing.startTime) / 1000);
       setTimeLeft(Math.max(0, DURATION - elapsed));
       setStarted(true);
     } else {
-      setProblems(pickRandom(PROBLEMS_DATA, 3));
+      setProblems(pickRandom(allProblems, 3));
     }
-  }, []);
+  }, [allProblems, loading]);
 
   // Countdown
   useEffect(() => {
@@ -84,12 +86,20 @@ export default function Simulation() {
 
   const handleNewSimulation = useCallback(() => {
     sessionStorage.removeItem(STORAGE_KEY);
-    const newProblems = pickRandom(PROBLEMS_DATA, 3);
+    const newProblems = pickRandom(allProblems, 3);
     setProblems(newProblems);
     setStarted(false);
     setExpired(false);
     setTimeLeft(DURATION);
-  }, []);
+  }, [allProblems]);
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+      </div>
+    );
+  }
 
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const seconds = String(timeLeft % 60).padStart(2, '0');
@@ -116,11 +126,10 @@ export default function Simulation() {
       {/* Timer */}
       <div className={`card text-center mb-8 ${timerUrgent && started ? 'border-red-400 dark:border-red-500' : ''}`}>
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">זמן שנותר</p>
-        <div className={`text-6xl font-mono font-bold tabular-nums mb-4 ${
-          !started ? 'text-gray-400' :
-          timerUrgent ? 'text-red-500 animate-pulse' :
-          'text-primary'
-        }`}>
+        <div className={`text-6xl font-mono font-bold tabular-nums mb-4 ${!started ? 'text-gray-400' :
+            timerUrgent ? 'text-red-500 animate-pulse' :
+              'text-primary'
+          }`}>
           {minutes}:{seconds}
         </div>
 
@@ -206,13 +215,12 @@ export default function Simulation() {
               <button
                 onClick={() => router.push(`/session/${problem.id}`)}
                 disabled={!started}
-                className={`mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  !started
+                className={`mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${!started
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700'
                     : solved
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                    : 'btn-primary justify-center'
-                }`}
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                      : 'btn-primary justify-center'
+                  }`}
               >
                 {!started ? 'התחל את הראיון תחילה' : solved ? 'פתור שוב' : 'פתור שאלה'}
                 {started && <i className="fas fa-arrow-left mr-2"></i>}

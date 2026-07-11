@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import ProblemRow from '@/components/ProblemRow';
-import { PROBLEMS_DATA } from '@/data/problemsData';
 import { useApp } from '@/context/AppContext';
+import { useProblems } from '@/hooks/useProblems';
 
 function getStatus(problemId, solutions, session) {
   const sol = solutions[problemId];
@@ -14,17 +14,18 @@ function getStatus(problemId, solutions, session) {
 
 export default function Problems() {
   const { solutions, session } = useApp();
+  const { problems, loading } = useProblems();
   const [search, setSearch] = useState('');
   const [topicFilter, setTopicFilter] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const problems = PROBLEMS_DATA.map(p => ({
+  const problemsWithStatus = problems.map(p => ({
     ...p,
     status: getStatus(p.id, solutions, session),
   }));
 
-  const filtered = problems.filter(p => {
+  const filtered = problemsWithStatus.filter(p => {
     if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (topicFilter && p.topic !== topicFilter) return false;
     if (difficultyFilter && p.difficulty !== difficultyFilter) return false;
@@ -32,14 +33,22 @@ export default function Problems() {
     return true;
   });
 
-  const topics = [...new Set(PROBLEMS_DATA.map(p => p.topic))];
+  const topics = [...new Set(problems.map(p => p.topic))];
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-purple-900 dark:text-white">בנק שאלות</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{PROBLEMS_DATA.length}+ שאלות בנושאי קידוד נפוצים בראיונות</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{problems.length}+ שאלות בנושאי קידוד נפוצים בראיונות</p>
         </div>
         <div className="relative">
           <input

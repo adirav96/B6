@@ -1,16 +1,30 @@
 import express from 'express';
 import { spawn } from 'child_process';
 import authMiddleware from '../middleware/auth.js';
+import * as problemsDb from '../db/problems.js';
 
 const router = express.Router();
 
-router.post('/', authMiddleware, (req, res) => {
-  const { code, testCases, functionName } = req.body;
-  if (!code || !testCases || !functionName) {
+router.post('/', authMiddleware, async (req, res) => {
+  const { code, testCases, functionName, problemId } = req.body;
+  if (!code || !functionName) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const testCasesJson = JSON.stringify(testCases).replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\"\\"');
+  let activeTestCases = testCases;
+  if ((!activeTestCases || activeTestCases.length === 0) && problemId) {
+    const problem = await problemsDb.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ error: 'Problem not found' });
+    }
+    activeTestCases = problem.testCases || [];
+  }
+
+  if (!activeTestCases || activeTestCases.length === 0) {
+    return res.status(400).json({ error: 'Missing test cases' });
+  }
+
+  const testCasesJson = JSON.stringify(activeTestCases).replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\\"\\"');
 
   // same harness as the client-side codeRunner — keeps behavior identical
   const wrappedCode = `from __future__ import annotations

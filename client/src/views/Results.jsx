@@ -3,14 +3,23 @@
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
-import { getProblemById } from '@/data/problemsData';
+import { useProblems } from '@/hooks/useProblems';
 
 export default function Results() {
   const { problemId } = useParams();
   const router = useRouter();
   const { solutions } = useApp();
-  const problem = getProblemById(parseInt(problemId));
+  const { problems, loading } = useProblems();
+  const problem = problems.find((p) => p.id === parseInt(problemId));
   const solution = solutions?.[parseInt(problemId)];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+      </div>
+    );
+  }
 
   if (!solution || !problem) {
     return (

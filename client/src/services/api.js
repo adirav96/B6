@@ -146,14 +146,6 @@ export async function apiSaveActivity(date) {
   });
 }
 
-export async function apiGetProblems() {
-  return request('/problems');
-}
-
-export async function apiGetProblem(problemId) {
-  return request(`/problems/${problemId}`);
-}
-
 export async function apiCreateProblem(problem) {
   return request('/problems', {
     method: 'POST',

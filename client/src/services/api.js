@@ -32,6 +32,10 @@ async function request(path, options = {}, retries = 2) {
         throw new Error('UNAUTHORIZED');
       }
 
+      if (res.status === 204) {
+        return {};
+      }
+
       // non-JSON usually means the proxy returned an error page
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
@@ -139,5 +143,33 @@ export async function apiSaveActivity(date) {
   return request('/activity', {
     method: 'POST',
     body: JSON.stringify({ date }),
+  });
+}
+
+export async function apiGetProblems() {
+  return request('/problems');
+}
+
+export async function apiGetProblem(problemId) {
+  return request(`/problems/${problemId}`);
+}
+
+export async function apiCreateProblem(problem) {
+  return request('/problems', {
+    method: 'POST',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiUpdateProblem(problemId, updates) {
+  return request(`/problems/${problemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function apiDeleteProblem(problemId) {
+  return request(`/problems/${problemId}`, {
+    method: 'DELETE',
   });
 }

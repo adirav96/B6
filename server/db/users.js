@@ -8,6 +8,7 @@ export function toProfile(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role || 'user',
     university: user.university || '',
     joinDate: user.joinDate,
     isAdmin: !!user.isAdmin,
@@ -41,6 +42,7 @@ export async function createUser({ name, email, password, university }) {
     email: email.toLowerCase().trim(),
     password: hashedPassword,
     university: university || '',
+    role: 'user',
     joinDate: new Date().toISOString().split('T')[0],
     isAdmin: false,
   };

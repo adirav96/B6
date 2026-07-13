@@ -2,68 +2,97 @@ import { getDb } from '../firebase.js';
 
 const COLLECTION = 'problems';
 
-function serializeProblem(problem) {
-    const { testCases, ...rest } = problem;
-    const data = {
-        ...rest,
-        order: problem.order ?? Number(problem.id),
-        id: Number(problem.id),
-        testCasesJson: JSON.stringify(testCases || []),
-    };
-    return data;
-}
-
 function normalizeProblem(doc) {
-    const data = doc.data();
-    let testCases = data.testCases;
+  const raw = doc.data() || {};
+  const idValue = raw.id ?? doc.id;
+  const id = Number(idValue);
 
-    if (!testCases && data.testCasesJson) {
-        try {
-            testCases = JSON.parse(data.testCasesJson);
-        } catch {
-            testCases = [];
-        }
-    }
-
-    return { id: Number(doc.id), ...data, ...(testCases ? { testCases } : {}) };
+  return {
+    id: Number.isFinite(id) ? id : idValue,
+    title: raw.title || '',
+    titleHe: raw.titleHe || '',
+    topic: raw.topic || '',
+    difficulty: raw.difficulty || 'easy',
+    acceptance: typeof raw.acceptance === 'number' ? raw.acceptance : 0,
+    companies: Array.isArray(raw.companies) ? raw.companies : [],
+    descriptionHe: raw.descriptionHe || '',
+    examples: Array.isArray(raw.examples) ? raw.examples : [],
+    constraints: Array.isArray(raw.constraints) ? raw.constraints : [],
+    starterCode: raw.starterCode || { python: '' },
+    functionName: raw.functionName || '',
+    testCases: Array.isArray(raw.testCases) ? raw.testCases : [],
+    hints: Array.isArray(raw.hints) ? raw.hints : [],
+    published: raw.published !== false,
+    updatedAt: raw.updatedAt || null,
+    createdAt: raw.createdAt || null,
+  };
 }
 
 export async function getAll() {
-    const snap = await getDb().collection(COLLECTION).orderBy('order').get();
-    return snap.docs.map(normalizeProblem);
+  const snap = await getDb().collection(COLLECTION).get();
+  return snap.docs.map(normalizeProblem).sort((a, b) => Number(a.id) - Number(b.id));
 }
 
-export async function findById(id) {
-    const doc = await getDb().collection(COLLECTION).doc(String(id)).get();
-    if (!doc.exists) return null;
-    return normalizeProblem(doc);
+export async function getById(problemId) {
+  const idStr = String(problemId);
+  const directDoc = await getDb().collection(COLLECTION).doc(idStr).get();
+  if (directDoc.exists) return normalizeProblem(directDoc);
+
+  const snap = await getDb().collection(COLLECTION).where('id', '==', Number(problemId)).limit(1).get();
+  if (snap.empty) return null;
+  return normalizeProblem(snap.docs[0]);
 }
 
-export async function upsert(problem) {
-    const id = problem.id ?? problem.order;
-    if (id === undefined || id === null) {
-        throw new Error('Problem id is required');
-    }
+export async function create(problemData) {
+  const idStr = String(problemData.id);
+  const ref = getDb().collection(COLLECTION).doc(idStr);
+  const existing = await ref.get();
+  if (existing.exists) {
+    const err = new Error('Problem already exists');
+    err.code = 'ALREADY_EXISTS';
+    throw err;
+  }
 
-    const data = serializeProblem({ ...problem, id: Number(id), order: problem.order ?? Number(id) });
+  const payload = {
+    ...problemData,
+    id: Number(problemData.id),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
-    await getDb().collection(COLLECTION).doc(String(id)).set(data, { merge: true });
-    return data;
+  await ref.set(payload);
+  const saved = await ref.get();
+  return normalizeProblem(saved);
 }
 
-export async function replaceAll(problems) {
-    const batch = getDb().batch();
-    problems.forEach((problem) => {
-        const id = problem.id ?? problem.order;
-        if (id === undefined || id === null) {
-            throw new Error('Problem id is required');
-        }
-        const data = serializeProblem({ ...problem, id: Number(id), order: problem.order ?? Number(id) });
-        batch.set(getDb().collection(COLLECTION).doc(String(id)), data, { merge: true });
-    });
-    await batch.commit();
+export async function update(problemId, updates) {
+  const idStr = String(problemId);
+  const ref = getDb().collection(COLLECTION).doc(idStr);
+  const existing = await ref.get();
+
+  if (!existing.exists) {
+    const err = new Error('Problem not found');
+    err.code = 'NOT_FOUND';
+    throw err;
+  }
+
+  const payload = {
+    ...updates,
+    id: Number(problemId),
+    updatedAt: new Date().toISOString(),
+  };
+
+  await ref.set(payload, { merge: true });
+  const saved = await ref.get();
+  return normalizeProblem(saved);
 }
 
-export async function remove(id) {
-    await getDb().collection(COLLECTION).doc(String(id)).delete();
+export async function remove(problemId) {
+  const idStr = String(problemId);
+  const ref = getDb().collection(COLLECTION).doc(idStr);
+  const existing = await ref.get();
+  if (!existing.exists) return false;
+
+  await ref.delete();
+  return true;
 }

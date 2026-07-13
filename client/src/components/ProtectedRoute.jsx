@@ -4,15 +4,19 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 
-export default function ProtectedRoute({ children }) {
-  const { isLoggedIn, loading } = useApp();
+export default function ProtectedRoute({ children, requireAdmin = false }) {
+  const { isLoggedIn, loading, isAdmin } = useApp();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
       router.replace('/login');
+      return;
     }
-  }, [isLoggedIn, loading, router]);
+    if (!loading && isLoggedIn && requireAdmin && !isAdmin) {
+      router.replace('/dashboard');
+    }
+  }, [isLoggedIn, loading, isAdmin, requireAdmin, router]);
 
   if (loading) {
     return (
@@ -23,6 +27,7 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!isLoggedIn) return null;
+  if (requireAdmin && !isAdmin) return null;
 
   return children;
 }

@@ -1,9 +1,10 @@
 import './globals.css';
 import Providers from '@/components/Providers';
+import { APP_METADATA } from '@/content/appContent';
 
 export const metadata = {
-  title: 'CodeInterview - הכנה לראיונות טכניים',
-  description: 'הכנה חכמה לראיונות טכניים בפייתון',
+  title: APP_METADATA.title,
+  description: APP_METADATA.description,
 };
 
 export default function RootLayout({ children }) {

@@ -10,8 +10,8 @@ import { sendError } from '../utils/response.js';
 const router = Router();
 
 // tokens expire after 7 days — long enough to not annoy users, short enough to rotate regularly
-function signToken(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+function signToken(user) {
+  return jwt.sign({ userId: user.id, role: user.role || 'user' }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
 router.post('/register', registerLimiter, async (req, res) => {
@@ -34,7 +34,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 
     const user = await usersDb.createUser({ name, email, password, university });
-    const token = signToken(user.id);
+    const token = signToken(user);
 
     res.status(201).json({ token, user: usersDb.toProfile(user) });
   } catch (err) {
@@ -60,7 +60,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       return sendError(res, 401, 'Incorrect email or password', 'INVALID_CREDENTIALS');
     }
 
-    const token = signToken(user.id);
+    const token = signToken(user);
     res.json({ token, user: usersDb.toProfile(user) });
   } catch (err) {
     console.error('Login error:', err);

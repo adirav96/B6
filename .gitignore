@@ -20,6 +20,9 @@ dist-ssr
 client/.env.local
 server/.env
 firebase-service-account.json
+serviceAccountKey.json
+*service*account*.json
+*firebase*admin*.json
 
 # Editor directories and files
 .vscode/*

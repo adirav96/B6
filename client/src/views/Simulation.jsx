@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { useProblems } from '@/hooks/useProblems';
+import { SIMULATION_CONTENT } from '@/content/simulationContent';
 
 const DURATION = 45 * 60;
 const STORAGE_KEY = 'simulation_session';
@@ -33,7 +33,7 @@ function saveSession(problemIds, startTime) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ problemIds, startTime }));
 }
 
-const DIFFICULTY_LABEL = { easy: 'קל', medium: 'בינוני', hard: 'קשה' };
+const DIFFICULTY_LABEL = SIMULATION_CONTENT.difficultyLabel;
 const DIFFICULTY_COLOR = {
   easy: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
   medium: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
@@ -42,8 +42,7 @@ const DIFFICULTY_COLOR = {
 
 export default function Simulation() {
   const router = useRouter();
-  const { solutions } = useApp();
-  const { problems: allProblems, loading } = useProblems();
+  const { solutions, problems: allProblems } = useApp();
   const [problems, setProblems] = useState([]);
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [started, setStarted] = useState(false);
@@ -51,7 +50,8 @@ export default function Simulation() {
 
   // Load or create session
   useEffect(() => {
-    if (loading || allProblems.length === 0) return;
+    if (!allProblems.length) return;
+
     const existing = loadSession();
     if (existing) {
       const probs = existing.problemIds.map((id) => allProblems.find((p) => p.id === id)).filter(Boolean);
@@ -62,7 +62,7 @@ export default function Simulation() {
     } else {
       setProblems(pickRandom(allProblems, 3));
     }
-  }, [allProblems, loading]);
+  }, [allProblems]);
 
   // Countdown
   useEffect(() => {
@@ -85,6 +85,7 @@ export default function Simulation() {
   }, [problems]);
 
   const handleNewSimulation = useCallback(() => {
+    if (!allProblems.length) return;
     sessionStorage.removeItem(STORAGE_KEY);
     const newProblems = pickRandom(allProblems, 3);
     setProblems(newProblems);
@@ -92,14 +93,6 @@ export default function Simulation() {
     setExpired(false);
     setTimeLeft(DURATION);
   }, [allProblems]);
-
-  if (loading) {
-    return (
-      <div className="h-[calc(100vh-8rem)] flex items-center justify-center">
-        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
-      </div>
-    );
-  }
 
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const seconds = String(timeLeft % 60).padStart(2, '0');
@@ -115,21 +108,22 @@ export default function Simulation() {
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
           <i className="fas fa-briefcase"></i>
-          סימולציית ראיון עבודה
+          {SIMULATION_CONTENT.headerBadge}
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">ראיון טכני מדומה</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{SIMULATION_CONTENT.title}</h1>
         <p className="text-gray-500 dark:text-gray-400">
-          3 שאלות אקראיות · 45 דקות · פתור כמה שיותר
+          {SIMULATION_CONTENT.subtitle}
         </p>
       </div>
 
       {/* Timer */}
       <div className={`card text-center mb-8 ${timerUrgent && started ? 'border-red-400 dark:border-red-500' : ''}`}>
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">זמן שנותר</p>
-        <div className={`text-6xl font-mono font-bold tabular-nums mb-4 ${!started ? 'text-gray-400' :
-            timerUrgent ? 'text-red-500 animate-pulse' :
-              'text-primary'
-          }`}>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">{SIMULATION_CONTENT.timeLeft}</p>
+        <div className={`text-6xl font-mono font-bold tabular-nums mb-4 ${
+          !started ? 'text-gray-400' :
+          timerUrgent ? 'text-red-500 animate-pulse' :
+          'text-primary'
+        }`}>
           {minutes}:{seconds}
         </div>
 
@@ -144,26 +138,26 @@ export default function Simulation() {
         {!started ? (
           <button onClick={handleStart} className="btn-primary px-8 py-3 text-base">
             <i className="fas fa-play ml-2"></i>
-            התחל ראיון
+            {SIMULATION_CONTENT.startInterview}
           </button>
         ) : expired ? (
           <div className="space-y-3">
-            <p className="text-red-500 font-semibold text-lg">⏰ הזמן נגמר!</p>
-            <p className="text-gray-500 text-sm">פתרת {solvedCount} מתוך {problems.length} שאלות</p>
+            <p className="text-red-500 font-semibold text-lg">{SIMULATION_CONTENT.timeUp}</p>
+            <p className="text-gray-500 text-sm">{SIMULATION_CONTENT.solvedSummary(solvedCount, problems.length)}</p>
             <button onClick={handleNewSimulation} className="btn-primary px-6 py-2.5">
               <i className="fas fa-redo ml-2"></i>
-              ראיון חדש
+              {SIMULATION_CONTENT.newInterview}
             </button>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-4">
             <span className="text-sm text-gray-500">
               <i className="fas fa-check-circle text-emerald-500 ml-1"></i>
-              {solvedCount}/{problems.length} הושלמו
+              {SIMULATION_CONTENT.completedCounter(solvedCount, problems.length)}
             </span>
             <button onClick={handleNewSimulation} className="btn-outline text-sm px-4 py-2">
               <i className="fas fa-shuffle ml-1"></i>
-              ראיון חדש
+              {SIMULATION_CONTENT.newInterview}
             </button>
           </div>
         )}
@@ -184,16 +178,16 @@ export default function Simulation() {
               {/* Badge number */}
               <div className="flex items-start justify-between">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  שאלה {idx + 1}
+                  {SIMULATION_CONTENT.questionLabel(idx)}
                 </span>
                 {solved && (
                   <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <i className="fas fa-check"></i> הושלם
+                    <i className="fas fa-check"></i> {SIMULATION_CONTENT.solvedBadge}
                   </span>
                 )}
                 {attempted && (
                   <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
-                    נוסה
+                    {SIMULATION_CONTENT.attemptedBadge}
                   </span>
                 )}
               </div>
@@ -215,14 +209,15 @@ export default function Simulation() {
               <button
                 onClick={() => router.push(`/session/${problem.id}`)}
                 disabled={!started}
-                className={`mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${!started
+                className={`mt-auto w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  !started
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700'
                     : solved
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                      : 'btn-primary justify-center'
-                  }`}
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                    : 'btn-primary justify-center'
+                }`}
               >
-                {!started ? 'התחל את הראיון תחילה' : solved ? 'פתור שוב' : 'פתור שאלה'}
+                {!started ? SIMULATION_CONTENT.solveFirst : solved ? SIMULATION_CONTENT.solveAgain : SIMULATION_CONTENT.solveQuestion}
                 {started && <i className="fas fa-arrow-left mr-2"></i>}
               </button>
             </div>
@@ -235,18 +230,18 @@ export default function Simulation() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="card max-w-sm w-full mx-4 text-center space-y-4">
             <div className="text-5xl">⏰</div>
-            <h2 className="text-2xl font-bold text-purple-900 dark:text-white">הזמן נגמר!</h2>
+            <h2 className="text-2xl font-bold text-purple-900 dark:text-white">{SIMULATION_CONTENT.timerDoneTitle}</h2>
             <p className="text-gray-500">
-              פתרת <strong>{solvedCount}</strong> מתוך <strong>{problems.length}</strong> שאלות
+              {SIMULATION_CONTENT.solvedCountText(solvedCount, problems.length)}
             </p>
             {solvedCount > 0 && (
               <p className="text-emerald-600 font-semibold">
-                {solvedCount === 3 ? '🎉 מושלם! פתרת את כולן!' : 'כל הכבוד על המאמץ!'}
+                {solvedCount === 3 ? SIMULATION_CONTENT.perfect : SIMULATION_CONTENT.goodEffort}
               </p>
             )}
             <button onClick={handleNewSimulation} className="btn-primary w-full justify-center py-3">
               <i className="fas fa-redo ml-2"></i>
-              ראיון חדש
+              {SIMULATION_CONTENT.newInterview}
             </button>
           </div>
         </div>

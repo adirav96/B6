@@ -3,10 +3,17 @@
 import { useRouter } from 'next/navigation';
 import { DIFFICULTY_MAP, STATUS_MAP } from '@/data/fakeData';
 
-export default function ProblemRow({ problem }) {
+export default function ProblemRow({ problem, isAdmin = false, onTogglePublish, isSaving = false, publishLabels }) {
   const router = useRouter();
   const diff = DIFFICULTY_MAP[problem.difficulty];
   const status = STATUS_MAP[problem.status];
+  const isPublished = problem.published !== false;
+
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    if (!onTogglePublish || isSaving) return;
+    onTogglePublish(problem);
+  };
 
   return (
     <tr
@@ -15,7 +22,7 @@ export default function ProblemRow({ problem }) {
     >
       <td className="px-6 py-4"><i className={status.icon}></i></td>
       <td className="px-6 py-4">
-        <div className="font-medium text-gray-900 dark:text-gray-100">{problem.id}. {problem.title}</div>
+        <div className="font-medium text-gray-900 dark:text-gray-100 truncate max-w-[220px] sm:max-w-[280px] md:max-w-none">{problem.id}. {problem.title}</div>
       </td>
       <td className="px-6 py-4 hidden md:table-cell">
         <span className="text-sm text-gray-500 dark:text-gray-400">{problem.topic}</span>
@@ -41,6 +48,29 @@ export default function ProblemRow({ problem }) {
           )}
         </div>
       </td>
+      {isAdmin && (
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                isPublished
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+              }`}
+            >
+              {isPublished ? publishLabels?.on : publishLabels?.off}
+            </span>
+            <button
+              type="button"
+              onClick={handleToggle}
+              disabled={isSaving}
+              className="text-xs bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isSaving ? publishLabels?.saving : publishLabels?.save}
+            </button>
+          </div>
+        </td>
+      )}
     </tr>
   );
 }

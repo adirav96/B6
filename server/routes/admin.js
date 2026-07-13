@@ -41,8 +41,8 @@ router.get('/users', async (_req, res) => {
 
 router.patch('/users/:userId/role', async (req, res) => {
   try {
-    const { isAdmin } = req.body;
-    const user = await usersDb.updateRole(req.params.userId, !!isAdmin);
+    const nextRole = req.body?.role === 'admin' || req.body?.isAdmin === true ? 'admin' : 'user';
+    const user = await usersDb.updateRole(req.params.userId, nextRole);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -69,9 +69,12 @@ router.post('/problems', async (req, res) => {
     if (!problem.title || !problem.functionName) {
       return res.status(400).json({ error: 'Missing required problem fields' });
     }
-    const saved = await problemsDb.upsert(problem);
+    const saved = await problemsDb.create(problem);
     res.status(201).json({ problem: saved });
   } catch (err) {
+    if (err.code === 'ALREADY_EXISTS') {
+      return res.status(409).json({ error: 'Problem already exists' });
+    }
     console.error('Admin create problem error:', err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -84,9 +87,12 @@ router.put('/problems/:problemId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid problem ID' });
     }
     const problem = normalizeProblemPayload(req.body, problemId);
-    const saved = await problemsDb.upsert(problem);
+    const saved = await problemsDb.update(problemId, problem);
     res.json({ problem: saved });
   } catch (err) {
+    if (err.code === 'NOT_FOUND') {
+      return res.status(404).json({ error: 'Problem not found' });
+    }
     console.error('Admin update problem error:', err);
     res.status(500).json({ error: 'Server error' });
   }

@@ -11,7 +11,6 @@ export function toProfile(user) {
     role: user.role || 'user',
     university: user.university || '',
     joinDate: user.joinDate,
-    isAdmin: !!user.isAdmin,
   };
 }
 
@@ -44,7 +43,6 @@ export async function createUser({ name, email, password, university }) {
     university: university || '',
     role: 'user',
     joinDate: new Date().toISOString().split('T')[0],
-    isAdmin: false,
   };
 
   const ref = await getDb().collection(COLLECTION).add(data);
@@ -60,8 +58,8 @@ export async function getAll() {
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-export async function updateRole(userId, isAdmin) {
-  await getDb().collection(COLLECTION).doc(userId).set({ isAdmin: !!isAdmin }, { merge: true });
+export async function updateRole(userId, role) {
+  await getDb().collection(COLLECTION).doc(userId).set({ role: role === 'admin' ? 'admin' : 'user' }, { merge: true });
   return findById(userId);
 }
 

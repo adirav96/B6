@@ -13,7 +13,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
   let activeTestCases = testCases;
   if ((!activeTestCases || activeTestCases.length === 0) && problemId) {
-    const problem = await problemsDb.findById(problemId);
+    const problem = await problemsDb.getById(problemId);
     if (!problem) {
       return res.status(404).json({ error: 'Problem not found' });
     }

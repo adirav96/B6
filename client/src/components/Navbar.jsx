@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { NAV_LINKS, NAV_TEXT } from '@/content/navigationContent';
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -33,36 +34,29 @@ export default function Navbar() {
         : 'text-gray-600 hover:text-primary hover:bg-gray-50'
     }`;
 
-  const navLinks = [
-    { to: '/dashboard', label: 'דשבורד' },
-    { to: '/problems', label: 'שאלות' },
-    { to: '/simulation', label: 'סימולציית ראיון' },
-    { to: '/progress', label: 'התקדמות' },
-  ];
-
   return (
     <nav className="app-header sticky top-0 z-50 overflow-x-hidden">
       <div className="container-max">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3 sm:gap-8 min-w-0">
             <Link href="/dashboard" className="flex items-center gap-2">
               <i className="fas fa-code text-primary text-2xl"></i>
-              <span className="font-bold text-xl text-purple-900 dark:text-white">CodeInterview</span>
+              <span className="font-bold text-lg sm:text-xl text-purple-900 dark:text-white truncate">{NAV_TEXT.brand}</span>
             </Link>
             <div className="hidden md:flex gap-1">
-              {navLinks.map((link) => (
+              {NAV_LINKS.map((link) => (
                 <Link key={link.label} href={link.to} className={linkClass(link.to)}>
                   {link.label}
                 </Link>
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={toggleDark}
               className="p-2 rounded-lg text-gray-400 hover:text-primary transition-colors"
-              aria-label="החלף מצב תצוגה"
-              title={dark ? 'מצב בהיר' : 'מצב כהה'}
+              aria-label={NAV_TEXT.themeAria}
+              title={dark ? NAV_TEXT.themeLight : NAV_TEXT.themeDark}
             >
               <i className={`fas ${dark ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
             </button>
@@ -70,13 +64,13 @@ export default function Navbar() {
               <button
                 onClick={() => { setNotifOpen((v) => !v); setMobileOpen(false); }}
                 className="relative cursor-pointer"
-                aria-label="התראות"
+                aria-label={NAV_TEXT.notificationsAria}
               >
                 <i className="fas fa-bell text-gray-400 text-lg hover:text-primary transition-colors"></i>
               </button>
               {notifOpen && (
                 <div className="absolute sm:left-0 left-2 right-2 mt-2 w-auto sm:w-64 bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-4 px-5 z-50">
-                  <p className="text-sm text-gray-500 text-center">אין התראות חדשות</p>
+                  <p className="text-sm text-gray-500 text-center">{NAV_TEXT.noNotifications}</p>
                 </div>
               )}
             </div>
@@ -91,14 +85,14 @@ export default function Navbar() {
             <button
               onClick={handleLogout}
               className="text-gray-400 hover:text-red-500 transition-colors p-1"
-              title="התנתקות"
+              title={NAV_TEXT.logoutTitle}
             >
               <i className="fas fa-sign-out-alt"></i>
             </button>
             <button
               className="md:hidden p-2 rounded-lg text-gray-500 hover:text-primary hover:bg-gray-100 transition-colors"
               onClick={() => { setMobileOpen((v) => !v); setNotifOpen(false); }}
-              aria-label="תפריט"
+              aria-label={NAV_TEXT.menuAria}
             >
               <i className={`fas ${mobileOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
             </button>
@@ -113,7 +107,7 @@ export default function Navbar() {
       >
         <div className="px-3 pb-4 pt-2 space-y-2 border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 card-sm">
           <div className="stack-mobile">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
                 href={link.to}

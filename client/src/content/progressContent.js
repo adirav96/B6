@@ -1,0 +1,40 @@
+export const PROGRESS_CONTENT = {
+  title: 'התקדמות ולמידה',
+  difficultyTitle: 'שאלות לפי רמת קושי',
+  difficultyLabels: {
+    easy: 'קל',
+    medium: 'בינוני',
+    hard: 'קשה',
+  },
+  aiScores: {
+    title: 'ציוני AI - ממוצע לפי קטגוריה',
+    empty: 'נדרשות עוד תשובות לניתוח מדויק',
+    labels: {
+      correctness: 'נכונות הפתרון',
+      efficiency: 'יעילות הקוד',
+      edgeCases: 'Edge Cases',
+    },
+  },
+  activityTitle: 'פעילות - 30 ימים אחרונים',
+  topicMasteryTitle: 'שליטה בנושאים',
+  solvedQuestionsLabel: (count) => `${count} שאלות הושלמו`,
+  feedbackTitle: 'סיכום פידבק מהמראיין AI',
+  strengthsTitle: 'נקודות חוזק',
+  improvementsTitle: 'נקודות לשיפור',
+  defaults: {
+    startStrength: 'התחלת את המסע – המשך כך!',
+    startImprove: 'פתור עוד שאלות כדי לקבל פידבק מפורט',
+    keepGoingStrength: 'ממשיך להתקדם – כל הכבוד!',
+    keepGoingImprove: 'המשך לתרגל באופן עקבי',
+  },
+  insights: {
+    strongTopics: (topics) => `שליטה טובה ב-${topics}`,
+    fastTimes: 'זמני פתרון מהירים ויעילים',
+    highScores: 'ציונים גבוהים באופן עקבי',
+    independent: 'פתרון עצמאי ללא שימוש ברמזים',
+    improveTopics: (topics) => `לתרגל עוד ב-${topics}`,
+    improveTime: 'לשפר את ניהול הזמן בפתרון',
+    improveHints: 'לנסות לפתור ללא שימוש ברמזים',
+    improveUnderstanding: 'להתמקד בהבנת הבעיה לפני כתיבת קוד',
+  },
+};

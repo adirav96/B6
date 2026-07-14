@@ -6,6 +6,7 @@ import { sendError } from '../utils/response.js';
 
 const router = Router();
 
+// All solution endpoints are private and require a verified user.
 router.use(auth);
 
 router.get('/', async (req, res) => {
@@ -20,17 +21,20 @@ router.get('/', async (req, res) => {
 
 router.post('/:problemId', async (req, res) => {
   try {
+    // Keep problemId parsing strict to avoid silent coercions.
     const problemId = parseInt(req.params.problemId, 10);
     if (isNaN(problemId) || problemId <= 0) {
       return sendError(res, 400, 'Invalid problem ID', 'INVALID_PROBLEM_ID');
     }
     const { score, timeSpent, code, testsPassed, totalTests, hintsUsed } = req.body;
 
+    // Collect all validation errors and return them in one response.
     const validationErrors = validateSolutionData({ score, timeSpent, code, testsPassed, totalTests, hintsUsed });
     if (validationErrors.length > 0) {
       return sendError(res, 400, validationErrors.join('; '), 'VALIDATION_ERROR', validationErrors);
     }
 
+    // Upsert keeps one latest record per user+problem pair.
     const solution = await solutionsDb.upsert(req.userId, problemId, {
       score,
       timeSpent,

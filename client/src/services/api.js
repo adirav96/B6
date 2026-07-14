@@ -32,6 +32,10 @@ async function request(path, options = {}, retries = 2) {
         throw new Error('UNAUTHORIZED');
       }
 
+      if (res.status === 204) {
+        return {};
+      }
+
       // non-JSON usually means the proxy returned an error page
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
@@ -90,9 +94,74 @@ export async function apiGetActivity() {
   return request('/activity');
 }
 
+export async function apiGetProblems({ includeTests = false } = {}) {
+  const suffix = includeTests ? '?includeTests=true' : '';
+  return request(`/problems${suffix}`);
+}
+
+export async function apiGetProblem(problemId, { includeTests = false } = {}) {
+  const suffix = includeTests ? '?includeTests=true' : '';
+  return request(`/problems/${problemId}${suffix}`);
+}
+
+export async function apiGetAdminUsers() {
+  return request('/admin/users');
+}
+
+export async function apiSetUserAdmin(userId, isAdmin) {
+  return request(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isAdmin }),
+  });
+}
+
+export async function apiGetAdminProblems() {
+  return request('/admin/problems');
+}
+
+export async function apiCreateAdminProblem(problem) {
+  return request('/admin/problems', {
+    method: 'POST',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiUpdateAdminProblem(problemId, problem) {
+  return request(`/admin/problems/${problemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiDeleteAdminProblem(problemId) {
+  return request(`/admin/problems/${problemId}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function apiSaveActivity(date) {
   return request('/activity', {
     method: 'POST',
     body: JSON.stringify({ date }),
+  });
+}
+
+export async function apiCreateProblem(problem) {
+  return request('/problems', {
+    method: 'POST',
+    body: JSON.stringify(problem),
+  });
+}
+
+export async function apiUpdateProblem(problemId, updates) {
+  return request(`/problems/${problemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function apiDeleteProblem(problemId) {
+  return request(`/problems/${problemId}`, {
+    method: 'DELETE',
   });
 }

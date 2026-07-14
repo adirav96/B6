@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ACTIVITY_GRID_CONTENT } from '@/content/activityGridContent';
 
 export default function ActivityGrid({ activityLog = [], count = 28 }) {
   const colors = ['bg-gray-200 dark:bg-gray-600', 'bg-green-200 dark:bg-green-800', 'bg-green-400 dark:bg-green-600', 'bg-green-600 dark:bg-green-400'];
@@ -32,18 +33,18 @@ export default function ActivityGrid({ activityLog = [], count = 28 }) {
           <div
             key={cell.id}
             className={`w-full aspect-square rounded-sm ${cell.color}`}
-            title={`${cell.dateLabel} — ${cell.level} שאלות`}
+            title={ACTIVITY_GRID_CONTENT.cellTitle(cell.dateLabel, cell.level)}
           />
         ))}
       </div>
       <div className="flex items-center justify-between mt-4 text-xs text-gray-400">
-        <span>פחות</span>
+        <span>{ACTIVITY_GRID_CONTENT.less}</span>
         <div className="flex gap-1">
           {colors.map((c, i) => (
             <div key={i} className={`w-3 h-3 rounded-sm ${c}`}></div>
           ))}
         </div>
-        <span>יותר</span>
+        <span>{ACTIVITY_GRID_CONTENT.more}</span>
       </div>
     </div>
   );

@@ -79,3 +79,47 @@ export function validateActivityData({ date }) {
 
   return errors;
 }
+
+export function validateProblemData(problem, { isCreate = false } = {}) {
+  const errors = [];
+
+  if (!problem || typeof problem !== 'object') {
+    return ['problem must be an object'];
+  }
+
+  if ((isCreate || problem.id !== undefined) && (!Number.isInteger(Number(problem.id)) || Number(problem.id) <= 0)) {
+    errors.push('id must be a positive integer');
+  }
+  if (isCreate && (!problem.title || typeof problem.title !== 'string')) {
+    errors.push('title is required');
+  }
+  if (isCreate && (!problem.titleHe || typeof problem.titleHe !== 'string')) {
+    errors.push('titleHe is required');
+  }
+  if (problem.difficulty && !['easy', 'medium', 'hard'].includes(problem.difficulty)) {
+    errors.push('difficulty must be one of: easy, medium, hard');
+  }
+  if (problem.acceptance !== undefined && (typeof problem.acceptance !== 'number' || problem.acceptance < 0 || problem.acceptance > 100)) {
+    errors.push('acceptance must be a number between 0 and 100');
+  }
+  if (problem.companies !== undefined && !Array.isArray(problem.companies)) {
+    errors.push('companies must be an array');
+  }
+  if (problem.examples !== undefined && !Array.isArray(problem.examples)) {
+    errors.push('examples must be an array');
+  }
+  if (problem.constraints !== undefined && !Array.isArray(problem.constraints)) {
+    errors.push('constraints must be an array');
+  }
+  if (problem.hints !== undefined && !Array.isArray(problem.hints)) {
+    errors.push('hints must be an array');
+  }
+  if (problem.starterCode !== undefined && (typeof problem.starterCode !== 'object' || problem.starterCode === null)) {
+    errors.push('starterCode must be an object');
+  }
+  if (problem.testCases !== undefined && !Array.isArray(problem.testCases)) {
+    errors.push('testCases must be an array');
+  }
+
+  return errors;
+}

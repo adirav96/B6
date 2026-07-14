@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import ThemeToggleFloating from '@/components/ThemeToggleFloating';
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -9,6 +10,7 @@ export default function AppShell({ children }) {
 
   return (
     <div className="w-full max-w-full overflow-x-hidden">
+      {hideNavbar && <ThemeToggleFloating />}
       {!hideNavbar && <Navbar />}
       {children}
     </div>

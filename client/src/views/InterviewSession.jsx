@@ -8,16 +8,18 @@ import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
 import ChatBubble from '@/components/ChatBubble';
 import { useApp } from '@/context/AppContext';
-import { getProblemById } from '@/data/problemsData';
 import { runCode } from '@/services/codeRunner';
 import { getInitialMessage, getAiResponse } from '@/services/aiChat';
 import { DIFFICULTY_MAP } from '@/data/fakeData';
+import { INTERVIEW_SESSION_CONTENT } from '@/content/interviewSessionContent';
 
 export default function InterviewSession() {
   const { problemId } = useParams();
   const router = useRouter();
-  const problem = getProblemById(parseInt(problemId));
+  const numericProblemId = parseInt(problemId, 10);
   const {
+    problems,
+    getProblemById,
     session,
     solutions,
     startSession,
@@ -28,6 +30,7 @@ export default function InterviewSession() {
     submitSolution,
     resetSession,
   } = useApp();
+  const problem = getProblemById(numericProblemId);
 
   const [activeTab, setActiveTab] = useState('problem');
   const [elapsed, setElapsed] = useState(0);
@@ -38,16 +41,17 @@ export default function InterviewSession() {
 
   useEffect(() => {
     try {
+      // Restore simulation context when user jumps between question routes.
       const raw = sessionStorage.getItem('simulation_session');
       if (!raw) return;
       const s = JSON.parse(raw);
-      if (s.problemIds.includes(parseInt(problemId))) {
+      if (s.problemIds.includes(numericProblemId)) {
         setSimSession(s);
         const elapsed = Math.floor((Date.now() - s.startTime) / 1000);
         setSimTimeLeft(Math.max(0, 45 * 60 - elapsed));
       }
     } catch {}
-  }, [problemId]);
+  }, [numericProblemId]);
 
   useEffect(() => {
     if (!simSession) return;
@@ -68,8 +72,7 @@ export default function InterviewSession() {
     if (!problem || initializedRef.current) return;
     initializedRef.current = true;
     const initialMsg = [{ role: 'ai', content: getInitialMessage(problem) }];
-    const existingCode = solutions[problem.id]?.code;
-    startSession(problem.id, existingCode || problem.starterCode.python, initialMsg);
+    startSession(problem.id, problem.starterCode.python, initialMsg);
   }, [problem]);
 
   useEffect(() => {
@@ -84,12 +87,21 @@ export default function InterviewSession() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session?.chatMessages?.length]);
 
+  if (!problem && problems.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] gap-4">
+        <i className="fas fa-spinner fa-spin text-primary text-3xl"></i>
+        <h2 className="text-xl font-bold text-gray-900">{INTERVIEW_SESSION_CONTENT.editor.runLoading}</h2>
+      </div>
+    );
+  }
+
   if (!problem) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] gap-4">
         <i className="fas fa-exclamation-triangle text-amber-500 text-4xl"></i>
-        <h2 className="text-xl font-bold text-gray-900">השאלה לא נמצאה</h2>
-        <Link href="/problems" className="text-primary hover:underline">חזרה לרשימת השאלות</Link>
+        <h2 className="text-xl font-bold text-gray-900">{INTERVIEW_SESSION_CONTENT.notFound.title}</h2>
+        <Link href="/problems" className="text-primary hover:underline">{INTERVIEW_SESSION_CONTENT.notFound.backToList}</Link>
       </div>
     );
   }
@@ -105,7 +117,7 @@ export default function InterviewSession() {
 
   const handleSendMessage = async () => {
     const text = chatInput.trim();
-    if (!text || aiLoading) return;
+    if (!text || aiLoading || !session) return;
     setChatInput('');
     addChatMessage('user', text);
     setAiLoading(true);
@@ -119,7 +131,7 @@ export default function InterviewSession() {
       );
       addChatMessage('ai', response);
     } catch {
-      addChatMessage('ai', 'מצטער, קרתה שגיאה. נסה שוב.');
+      addChatMessage('ai', INTERVIEW_SESSION_CONTENT.aiError);
     } finally {
       setAiLoading(false);
     }
@@ -128,6 +140,7 @@ export default function InterviewSession() {
   const handleRun = async () => {
     setRunLoading(true);
     try {
+      // "Run" only executes tests and stores result; it does not submit.
       const result = await runCode(session.code, problem.testCases, problem.functionName);
       setTestResults({
         results: result.results,
@@ -194,7 +207,7 @@ export default function InterviewSession() {
 
       {/* Simulation bar */}
       {simSession && (
-        <div className="flex items-center justify-between bg-gray-900 border-b border-gray-700 px-4 py-2 flex-shrink-0 gap-3">
+        <div className="flex flex-wrap items-center bg-gray-900 border-b border-gray-700 px-3 sm:px-4 py-2 flex-shrink-0 gap-2 sm:gap-3">
           {/* Timer */}
           <div className={`flex items-center gap-2 font-mono font-bold text-sm tabular-nums flex-shrink-0 ${simUrgent ? 'text-red-400 animate-pulse' : 'text-primary'}`}>
             <i className={`fas fa-clock text-xs ${simUrgent ? 'text-red-400' : 'text-primary'}`}></i>
@@ -202,11 +215,11 @@ export default function InterviewSession() {
           </div>
 
           {/* Problem tabs */}
-          <div className="flex gap-1.5 overflow-x-auto">
+          <div className="order-3 sm:order-none basis-full sm:basis-auto flex gap-1.5 overflow-x-auto">
             {simSession.problemIds.map((id, idx) => {
               const p = getProblemById(id);
               const solved = solutions[id]?.score >= 50;
-              const isCurrent = id === parseInt(problemId);
+              const isCurrent = id === numericProblemId;
               return (
                 <button
                   key={id}
@@ -220,7 +233,7 @@ export default function InterviewSession() {
                   }`}
                 >
                   {solved && <i className="fas fa-check ml-1 text-[10px]"></i>}
-                  {idx + 1}. {p?.titleHe || `שאלה ${idx + 1}`}
+                  {idx + 1}. {p?.titleHe || INTERVIEW_SESSION_CONTENT.sim.fallbackQuestion(idx)}
                 </button>
               );
             })}
@@ -229,25 +242,25 @@ export default function InterviewSession() {
           {/* Back to simulation */}
           <button
             onClick={() => router.push('/simulation')}
-            className="text-gray-400 hover:text-white text-xs flex items-center gap-1 flex-shrink-0 transition-colors"
+            className="text-gray-400 hover:text-white text-xs flex items-center gap-1 flex-shrink-0 transition-colors ml-auto sm:ml-0"
           >
             <i className="fas fa-th-large text-[10px]"></i>
-            סימולציה
+            {INTERVIEW_SESSION_CONTENT.sim.backToSimulation}
           </button>
         </div>
       )}
 
     <div className="flex flex-col lg:flex-row flex-1 min-h-0 min-w-0">
-      <div className="w-full lg:w-2/5 flex flex-col border-b lg:border-b-0 lg:border-l border-purple-200 dark:border-gray-700 bg-purple-50 dark:bg-gray-800 min-h-0 min-w-0 h-[45vh] lg:h-auto lg:flex-shrink-0">
+      <div className="w-full lg:w-2/5 flex flex-col border-b lg:border-b-0 lg:border-l border-purple-200 dark:border-gray-700 bg-purple-50 dark:bg-gray-800 min-h-0 min-w-0 h-[50vh] md:h-[45vh] lg:h-auto lg:flex-shrink-0">
         <div className="flex border-b border-purple-200 dark:border-gray-700">
           <button onClick={() => setActiveTab('problem')} className={tabClass('problem')}>
-            <i className="fas fa-file-alt ml-1"></i> שאלה
+            <i className="fas fa-file-alt ml-1"></i> {INTERVIEW_SESSION_CONTENT.tabs.problem}
           </button>
           <button onClick={() => setActiveTab('chat')} className={tabClass('chat')}>
-            <i className="fas fa-comments ml-1"></i> מראיין AI
+            <i className="fas fa-comments ml-1"></i> {INTERVIEW_SESSION_CONTENT.tabs.chat}
           </button>
           <button onClick={() => setActiveTab('hints')} className={tabClass('hints')}>
-            <i className="fas fa-lightbulb ml-1"></i> רמזים
+            <i className="fas fa-lightbulb ml-1"></i> {INTERVIEW_SESSION_CONTENT.tabs.hints}
           </button>
         </div>
 
@@ -263,17 +276,17 @@ export default function InterviewSession() {
               <p>{problem.descriptionHe}</p>
               {problem.examples.map((ex, idx) => (
                 <div key={idx} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                  <h4 className="font-semibold text-gray-900 mb-2">דוגמה {idx + 1}:</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">{INTERVIEW_SESSION_CONTENT.problem.example(idx)}</h4>
                   <p className="font-mono text-sm">
-                    <strong>Input:</strong> {ex.input}<br />
-                    <strong>Output:</strong> {ex.output}
-                    {ex.explanation && (<><br /><strong>Explanation:</strong> {ex.explanation}</>)}
+                    <strong>{INTERVIEW_SESSION_CONTENT.problem.inputLabel}</strong> {ex.input}<br />
+                    <strong>{INTERVIEW_SESSION_CONTENT.problem.outputLabel}</strong> {ex.output}
+                    {ex.explanation && (<><br /><strong>{INTERVIEW_SESSION_CONTENT.problem.explanationLabel}</strong> {ex.explanation}</>)}
                   </p>
                 </div>
               ))}
               {problem.constraints && problem.constraints.length > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                  <h4 className="font-semibold text-blue-900 mb-2">אילוצים:</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{INTERVIEW_SESSION_CONTENT.problem.constraints}</h4>
                   <ul className="text-sm text-blue-800 space-y-1 list-disc pr-4">
                     {problem.constraints.map((c, idx) => (
                       <li key={idx}>{c}</li>
@@ -311,7 +324,7 @@ export default function InterviewSession() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="שאלו את המראיין..."
+                  placeholder={INTERVIEW_SESSION_CONTENT.chat.placeholder}
                   className="flex-1 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
@@ -332,7 +345,7 @@ export default function InterviewSession() {
 
         {activeTab === 'hints' && (
           <div className="flex-1 overflow-y-auto p-6">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4">רמזים</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4">{INTERVIEW_SESSION_CONTENT.hints.title}</h3>
             <div className="space-y-3">
               {(problem.hints || []).map((hint, idx) => (
                 <HintItem
@@ -349,20 +362,20 @@ export default function InterviewSession() {
       </div>
 
       <div className="flex-1 flex flex-col bg-gray-900 min-w-0 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <select className="bg-gray-700 text-gray-200 text-sm rounded-lg px-3 py-1.5 border-none focus:ring-2 focus:ring-primary">
-              <option>Python 3</option>
+              <option>{INTERVIEW_SESSION_CONTENT.editor.language}</option>
             </select>
             <span className="text-gray-500 text-xs">|</span>
             <span className="text-gray-400 text-xs"><i className="fas fa-clock ml-1"></i> {formatTime(elapsed)}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={handleReset}
               className="text-gray-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors"
             >
-              <i className="fas fa-undo ml-1"></i> איפוס
+              <i className="fas fa-undo ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.reset}
             </button>
           </div>
         </div>
@@ -389,29 +402,29 @@ export default function InterviewSession() {
           </div>
         </div>
 
-        <div className="bg-gray-800 border-t border-gray-700 px-4 py-3">
+        <div className="bg-gray-800 border-t border-gray-700 px-3 sm:px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex gap-2">
+            <div className="flex flex-1 sm:flex-none gap-2">
               <button
                 onClick={handleRun}
                 disabled={runLoading || submitLoading}
-                className="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                className="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors disabled:opacity-50 flex-1 sm:flex-none"
               >
                 {runLoading ? (
-                  <><i className="fas fa-spinner fa-spin ml-1 text-green-400"></i> מריץ...</>
+                  <><i className="fas fa-spinner fa-spin ml-1 text-green-400"></i> {INTERVIEW_SESSION_CONTENT.editor.runLoading}</>
                 ) : (
-                  <><i className="fas fa-play ml-1 text-green-400"></i> הרצה</>
+                  <><i className="fas fa-play ml-1 text-green-400"></i> {INTERVIEW_SESSION_CONTENT.editor.run}</>
                 )}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={submitLoading || runLoading}
-                className="bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                className="bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors disabled:opacity-50 flex-1 sm:flex-none"
               >
                 {submitLoading ? (
-                  <><i className="fas fa-spinner fa-spin ml-1"></i> מגיש...</>
+                  <><i className="fas fa-spinner fa-spin ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submitLoading}</>
                 ) : (
-                  <><i className="fas fa-paper-plane ml-1"></i> הגשה</>
+                  <><i className="fas fa-paper-plane ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submit}</>
                 )}
               </button>
             </div>
@@ -419,7 +432,7 @@ export default function InterviewSession() {
 
           {session?.testResults && (
             <div className="mt-3 bg-gray-900 rounded-lg p-3">
-              <div className="text-xs font-medium text-gray-400 mb-2">תוצאות בדיקה:</div>
+              <div className="text-xs font-medium text-gray-400 mb-2">{INTERVIEW_SESSION_CONTENT.editor.testResults}</div>
               <div className="space-y-1.5 text-xs font-mono overflow-x-auto" dir="ltr">
                 {session.testResults.results.map((r, idx) => (
                   <div key={idx} className={`flex items-center gap-2 ${r.passed ? 'text-green-400' : 'text-red-400'}`}>
@@ -454,12 +467,12 @@ function HintItem({ hint, index, revealed, onReveal }) {
     <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
       <button onClick={handleClick} className="w-full text-right p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors">
         <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
-          {revealed ? hint.title : <><i className="fas fa-lock ml-1 text-gray-400"></i> רמז {index + 1}</>}
+          {revealed ? hint.title : <><i className="fas fa-lock ml-1 text-gray-400"></i> {INTERVIEW_SESSION_CONTENT.hints.locked(index)}</>}
         </span>
         {revealed ? (
           <i className={`fas fa-chevron-down text-gray-400 text-xs transition-transform ${open ? 'rotate-180' : ''}`}></i>
         ) : (
-          <span className="text-xs text-primary font-medium">לחץ לחשיפה</span>
+          <span className="text-xs text-primary font-medium">{INTERVIEW_SESSION_CONTENT.hints.reveal}</span>
         )}
       </button>
       {revealed && open && <div className="p-4 text-sm text-gray-600 dark:text-gray-300">{hint.content}</div>}

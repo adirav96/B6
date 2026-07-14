@@ -9,6 +9,10 @@ import {
   apiSaveSolution,
   apiGetActivity,
   apiSaveActivity,
+  apiGetProblems,
+  apiCreateProblem,
+  apiUpdateProblem,
+  apiDeleteProblem,
   setToken,
   hasToken,
 } from '../services/api';
@@ -22,6 +26,8 @@ function getInitialState() {
     user: null,
     solutions: {},
     activityLog: [],
+    problems: [],
+    problemsLoading: false,
     session: null,
   };
 }
@@ -39,6 +45,8 @@ function reducer(state, action) {
         user: action.payload.user || null,
         solutions: action.payload.solutions || {},
         activityLog: action.payload.activityLog || [],
+        problems: action.payload.problems || [],
+        problemsLoading: false,
       };
 
     case 'LOGOUT':
@@ -55,6 +63,12 @@ function reducer(state, action) {
 
     case 'SET_ACTIVITY':
       return { ...state, activityLog: action.payload };
+
+    case 'SET_PROBLEMS':
+      return { ...state, problems: action.payload, problemsLoading: false };
+
+    case 'PROBLEMS_LOADING':
+      return { ...state, problemsLoading: true };
 
     case 'START_SESSION': {
       // don't reset if the user navigates back to the same problem mid-session
@@ -145,6 +159,7 @@ function reducer(state, action) {
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, getInitialState);
+  // StrictMode can run effects twice in development; this keeps bootstrap idempotent.
   const initRef = useRef(false);
 
   useEffect(() => {
@@ -158,12 +173,13 @@ export function AppProvider({ children }) {
 
     (async () => {
       try {
-        const [{ user }, { solutions }, { activityLog }] = await Promise.all([
+        const [{ user }, { solutions }, { activityLog }, { problems }] = await Promise.all([
           apiGetMe(),
           apiGetSolutions(),
           apiGetActivity(),
+          apiGetProblems(),
         ]);
-        dispatch({ type: 'AUTH_READY', payload: { user, solutions, activityLog } });
+        dispatch({ type: 'AUTH_READY', payload: { user, solutions, activityLog, problems: problems || [] } });
       } catch {
         setToken(null);
         dispatch({ type: 'AUTH_READY', payload: {} });
@@ -174,11 +190,12 @@ export function AppProvider({ children }) {
   const login = useCallback(async (email, password) => {
     try {
       const { user } = await apiLogin(email, password);
-      const [{ solutions }, { activityLog }] = await Promise.all([
+      const [{ solutions }, { activityLog }, { problems }] = await Promise.all([
         apiGetSolutions(),
         apiGetActivity(),
+        apiGetProblems(),
       ]);
-      dispatch({ type: 'AUTH_READY', payload: { user, solutions, activityLog } });
+      dispatch({ type: 'AUTH_READY', payload: { user, solutions, activityLog, problems: problems || [] } });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -188,7 +205,8 @@ export function AppProvider({ children }) {
   const register = useCallback(async (name, email, password, university) => {
     try {
       const { user } = await apiRegister(name, email, password, university);
-      dispatch({ type: 'AUTH_READY', payload: { user, solutions: {}, activityLog: [] } });
+      const { problems } = await apiGetProblems();
+      dispatch({ type: 'AUTH_READY', payload: { user, solutions: {}, activityLog: [], problems: problems || [] } });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -231,6 +249,7 @@ export function AppProvider({ children }) {
       const { problemId } = state.session || {};
       if (!problemId) return;
 
+      // Update UI immediately so results screen is snappy, then persist in background.
       dispatch({ type: 'SUBMIT_SOLUTION', payload: { ...payload, code: state.session.code } });
 
       try {
@@ -261,10 +280,62 @@ export function AppProvider({ children }) {
     []
   );
 
+  const refreshProblems = useCallback(async () => {
+    dispatch({ type: 'PROBLEMS_LOADING' });
+    try {
+      const { problems } = await apiGetProblems();
+      dispatch({ type: 'SET_PROBLEMS', payload: problems || [] });
+      return { success: true };
+    } catch (err) {
+      dispatch({ type: 'SET_PROBLEMS', payload: state.problems });
+      return { success: false, error: err.message };
+    }
+  }, [state.problems]);
+
+  const createProblem = useCallback(async (problemData) => {
+    if (state.user?.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
+    }
+    try {
+      await apiCreateProblem(problemData);
+      await refreshProblems();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }, [refreshProblems, state.user?.role]);
+
+  const updateProblem = useCallback(async (problemId, updates) => {
+    if (state.user?.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
+    }
+    try {
+      await apiUpdateProblem(problemId, updates);
+      await refreshProblems();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }, [refreshProblems, state.user?.role]);
+
+  const deleteProblem = useCallback(async (problemId) => {
+    if (state.user?.role !== 'admin') {
+      return { success: false, error: 'Admin access required' };
+    }
+    try {
+      await apiDeleteProblem(problemId);
+      await refreshProblems();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }, [refreshProblems, state.user?.role]);
+
   const getStats = useCallback(() => {
     const solArr = Object.values(state.solutions);
     const totalSolved = solArr.length;
 
+    // Build current streak by walking backward day-by-day from today.
     let streak = 0;
     const check = new Date();
     check.setHours(0, 0, 0, 0);
@@ -294,7 +365,7 @@ export function AppProvider({ children }) {
   }, [state.solutions, state.activityLog]);
 
   const getTopicMastery = useCallback(
-    (problemsData) => {
+    (problemsData = state.problems) => {
       const map = {};
       problemsData.forEach((p) => {
         if (!map[p.topic]) map[p.topic] = { topic: p.topic, solved: 0, total: 0 };
@@ -306,11 +377,11 @@ export function AppProvider({ children }) {
         percent: t.total > 0 ? Math.round((t.solved / t.total) * 100) : 0,
       }));
     },
-    [state.solutions]
+    [state.problems, state.solutions]
   );
 
   const getRecentActivity = useCallback(
-    (problemsData, limit = 5) => {
+    (problemsData = state.problems, limit = 5) => {
       return Object.entries(state.solutions)
         .map(([id, sol]) => {
           const p = problemsData.find((pr) => pr.id === Number(id));
@@ -328,11 +399,11 @@ export function AppProvider({ children }) {
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, limit);
     },
-    [state.solutions]
+    [state.problems, state.solutions]
   );
 
   const getDifficultyBreakdown = useCallback(
-    (problemsData) => {
+    (problemsData = state.problems) => {
       const out = {
         easy: { solved: 0, total: 0 },
         medium: { solved: 0, total: 0 },
@@ -344,16 +415,19 @@ export function AppProvider({ children }) {
       });
       return out;
     },
-    [state.solutions]
+    [state.problems, state.solutions]
   );
 
   const value = {
     isLoggedIn: state.isLoggedIn,
     loading: state.loading,
+    isAdmin: state.user?.role === 'admin',
     user: state.user,
     solutions: state.solutions,
     session: state.session,
     activityLog: state.activityLog,
+    problems: state.problems,
+    problemsLoading: state.problemsLoading,
     login,
     register,
     logout,
@@ -365,6 +439,11 @@ export function AppProvider({ children }) {
     submitSolution,
     resetSession,
     clearSession,
+    refreshProblems,
+    createProblem,
+    updateProblem,
+    deleteProblem,
+    getProblemById: (problemId) => state.problems.find((p) => p.id === Number(problemId)) || null,
     getStats,
     getTopicMastery,
     getRecentActivity,

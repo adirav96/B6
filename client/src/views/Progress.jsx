@@ -3,13 +3,13 @@
 import { useMemo } from 'react';
 import ActivityGrid from '@/components/ActivityGrid';
 import { useApp } from '@/context/AppContext';
-import { PROBLEMS_DATA } from '@/data/problemsData';
+import { PROGRESS_CONTENT } from '@/content/progressContent';
 
 export default function Progress() {
-  const { solutions, activityLog, getTopicMastery, getDifficultyBreakdown } = useApp();
+  const { solutions, activityLog, problems, getTopicMastery, getDifficultyBreakdown } = useApp();
 
-  const difficulty = getDifficultyBreakdown(PROBLEMS_DATA);
-  const topicMastery = getTopicMastery(PROBLEMS_DATA);
+  const difficulty = getDifficultyBreakdown(problems);
+  const topicMastery = getTopicMastery(problems);
 
   // need at least 2 submissions for the averages to be meaningful
   const aiScores = useMemo(() => {
@@ -21,9 +21,9 @@ export default function Progress() {
     const efficiencyScore = Math.round(Math.max(0, Math.min(100, 100 - (avgTime - 300) / 6)));
     const edgeCaseScore = Math.round(entries.reduce((sum, s) => sum + ((s.testsPassed ?? 0) / Math.max(s.totalTests ?? 1, 1)) * 100, 0) / entries.length);
     return [
-      { label: 'נכונות הפתרון', percent: avgCorrectness },
-      { label: 'יעילות הקוד', percent: efficiencyScore },
-      { label: 'Edge Cases', percent: edgeCaseScore },
+      { label: PROGRESS_CONTENT.aiScores.labels.correctness, percent: avgCorrectness },
+      { label: PROGRESS_CONTENT.aiScores.labels.efficiency, percent: efficiencyScore },
+      { label: PROGRESS_CONTENT.aiScores.labels.edgeCases, percent: edgeCaseScore },
     ];
   }, [solutions]);
 
@@ -31,22 +31,22 @@ export default function Progress() {
     const s = [];
     const imp = [];
     const entries = Object.values(solutions);
-    if (entries.length === 0) return { strengths: ['התחלת את המסע – המשך כך!'], improvements: ['פתור עוד שאלות כדי לקבל פידבק מפורט'] };
+    if (entries.length === 0) return { strengths: [PROGRESS_CONTENT.defaults.startStrength], improvements: [PROGRESS_CONTENT.defaults.startImprove] };
     const strongTopics = topicMastery.filter(t => t.percent >= 70);
     const weakTopics = topicMastery.filter(t => t.percent < 40 && t.total > 0);
-    if (strongTopics.length > 0) s.push(`שליטה טובה ב-${strongTopics.map(t => t.topic).join(', ')}`);
+    if (strongTopics.length > 0) s.push(PROGRESS_CONTENT.insights.strongTopics(strongTopics.map(t => t.topic).join(', ')));
     const avgTime = entries.reduce((sum, e) => sum + (e.timeSpent ?? 0), 0) / entries.length;
-    if (avgTime < 1200) s.push('זמני פתרון מהירים ויעילים');
+    if (avgTime < 1200) s.push(PROGRESS_CONTENT.insights.fastTimes);
     const avgScore = entries.reduce((sum, e) => sum + (e.score ?? 0), 0) / entries.length;
-    if (avgScore >= 80) s.push('ציונים גבוהים באופן עקבי');
+    if (avgScore >= 80) s.push(PROGRESS_CONTENT.insights.highScores);
     const hintsUsed = entries.reduce((sum, e) => sum + (e.hintsUsed ?? 0), 0);
-    if (hintsUsed === 0 && entries.length >= 3) s.push('פתרון עצמאי ללא שימוש ברמזים');
-    if (weakTopics.length > 0) imp.push(`לתרגל עוד ב-${weakTopics.map(t => t.topic).join(', ')}`);
-    if (avgTime >= 1800) imp.push('לשפר את ניהול הזמן בפתרון');
-    if (hintsUsed > entries.length) imp.push('לנסות לפתור ללא שימוש ברמזים');
-    if (avgScore < 60) imp.push('להתמקד בהבנת הבעיה לפני כתיבת קוד');
-    if (s.length === 0) s.push('ממשיך להתקדם – כל הכבוד!');
-    if (imp.length === 0) imp.push('המשך לתרגל באופן עקבי');
+    if (hintsUsed === 0 && entries.length >= 3) s.push(PROGRESS_CONTENT.insights.independent);
+    if (weakTopics.length > 0) imp.push(PROGRESS_CONTENT.insights.improveTopics(weakTopics.map(t => t.topic).join(', ')));
+    if (avgTime >= 1800) imp.push(PROGRESS_CONTENT.insights.improveTime);
+    if (hintsUsed > entries.length) imp.push(PROGRESS_CONTENT.insights.improveHints);
+    if (avgScore < 60) imp.push(PROGRESS_CONTENT.insights.improveUnderstanding);
+    if (s.length === 0) s.push(PROGRESS_CONTENT.defaults.keepGoingStrength);
+    if (imp.length === 0) imp.push(PROGRESS_CONTENT.defaults.keepGoingImprove);
     return { strengths: s, improvements: imp };
   }, [solutions, topicMastery]);
 
@@ -79,20 +79,20 @@ export default function Progress() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-purple-900 dark:text-white mb-8">התקדמות ולמידה</h1>
+      <h1 className="text-2xl font-bold text-purple-900 dark:text-white mb-8">{PROGRESS_CONTENT.title}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-purple-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-purple-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">שאלות לפי רמת קושי</h3>
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">{PROGRESS_CONTENT.difficultyTitle}</h3>
           <div className="space-y-4">
-            {diffBar('קל', 'text-green-600', 'bg-green-500', difficulty.easy)}
-            {diffBar('בינוני', 'text-amber-600', 'bg-amber-500', difficulty.medium)}
-            {diffBar('קשה', 'text-red-600', 'bg-red-500', difficulty.hard)}
+            {diffBar(PROGRESS_CONTENT.difficultyLabels.easy, 'text-green-600', 'bg-green-500', difficulty.easy)}
+            {diffBar(PROGRESS_CONTENT.difficultyLabels.medium, 'text-amber-600', 'bg-amber-500', difficulty.medium)}
+            {diffBar(PROGRESS_CONTENT.difficultyLabels.hard, 'text-red-600', 'bg-red-500', difficulty.hard)}
           </div>
         </div>
 
         <div className="bg-purple-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-purple-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">ציוני AI - ממוצע לפי קטגוריה</h3>
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">{PROGRESS_CONTENT.aiScores.title}</h3>
           <div className="space-y-3">
             {aiScores ? (
               aiScores.map((score, idx) => (
@@ -107,19 +107,19 @@ export default function Progress() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-400 text-center py-4">נדרשות עוד תשובות לניתוח מדויק</p>
+              <p className="text-sm text-gray-400 text-center py-4">{PROGRESS_CONTENT.aiScores.empty}</p>
             )}
           </div>
         </div>
 
         <div className="bg-purple-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-purple-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">פעילות - 30 ימים אחרונים</h3>
+          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">{PROGRESS_CONTENT.activityTitle}</h3>
           <ActivityGrid activityLog={activityLog} count={28} />
         </div>
       </div>
 
       <div className="bg-purple-50 dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-gray-700 p-6 mb-8">
-        <h2 className="text-lg font-bold text-purple-900 dark:text-white mb-6">שליטה בנושאים</h2>
+        <h2 className="text-lg font-bold text-purple-900 dark:text-white mb-6">{PROGRESS_CONTENT.topicMasteryTitle}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {topicMastery.map((topic, idx) => (
             <div key={idx} className="border border-purple-200 dark:border-gray-600 bg-purple-50/60 dark:bg-gray-700/50 rounded-lg p-4">
@@ -130,23 +130,23 @@ export default function Progress() {
               <div className="bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                 <div className={`${topicColor(topic.percent)} rounded-full h-2`} style={{ width: `${topic.percent}%` }}></div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{topic.solved} שאלות הושלמו</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">{PROGRESS_CONTENT.solvedQuestionsLabel(topic.solved)}</div>
             </div>
           ))}
         </div>
       </div>
 
       <div className="bg-purple-50 dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-bold text-purple-900 dark:text-white mb-6">סיכום פידבק מהמראיין AI</h2>
+        <h2 className="text-lg font-bold text-purple-900 dark:text-white mb-6">{PROGRESS_CONTENT.feedbackTitle}</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-5 border border-green-200 dark:border-green-800">
-            <h3 className="font-bold text-green-800 dark:text-green-400 mb-3"><i className="fas fa-thumbs-up ml-2"></i>נקודות חוזק</h3>
+            <h3 className="font-bold text-green-800 dark:text-green-400 mb-3"><i className="fas fa-thumbs-up ml-2"></i>{PROGRESS_CONTENT.strengthsTitle}</h3>
             <ul className="space-y-2 text-sm text-green-700 dark:text-green-300">
               {strengths.map((s, i) => <li key={i} className="flex items-start gap-2"><i className="fas fa-check mt-0.5"></i> {s}</li>)}
             </ul>
           </div>
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-5 border border-amber-200 dark:border-amber-800">
-            <h3 className="font-bold text-amber-800 dark:text-amber-400 mb-3"><i className="fas fa-lightbulb ml-2"></i>נקודות לשיפור</h3>
+            <h3 className="font-bold text-amber-800 dark:text-amber-400 mb-3"><i className="fas fa-lightbulb ml-2"></i>{PROGRESS_CONTENT.improvementsTitle}</h3>
             <ul className="space-y-2 text-sm text-amber-700 dark:text-amber-300">
               {improvements.map((s, i) => <li key={i} className="flex items-start gap-2"><i className="fas fa-arrow-up mt-0.5"></i> {s}</li>)}
             </ul>

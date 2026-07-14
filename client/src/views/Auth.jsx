@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../context/AppContext';
+import { AUTH_CONTENT } from '@/content/authContent';
 
 export default function Auth({ initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode);
@@ -29,7 +30,7 @@ export default function Auth({ initialMode = 'login' }) {
     setError('');
 
     if (mode === 'login') {
-      if (!email || !password) { setError('נא למלא את כל השדות'); return; }
+      if (!email || !password) { setError(AUTH_CONTENT.validation.loginRequired); return; }
       setSubmitting(true);
       const result = await login(email, password);
       setSubmitting(false);
@@ -41,9 +42,9 @@ export default function Auth({ initialMode = 'login' }) {
         setError(result.error);
       }
     } else {
-      if (!name || !email || !password) { setError('נא למלא את כל שדות החובה'); return; }
+      if (!name || !email || !password) { setError(AUTH_CONTENT.validation.registerRequired); return; }
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-        setError('Password must be at least 8 characters and include uppercase, lowercase, and a number');
+        setError(AUTH_CONTENT.validation.passwordPolicy);
         return;
       }
       setSubmitting(true);
@@ -63,9 +64,9 @@ export default function Auth({ initialMode = 'login' }) {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <i className="fas fa-code text-indigo-300 text-3xl"></i>
-            <span className="font-bold text-2xl text-white">CodeInterview</span>
+            <span className="font-bold text-2xl text-white">{AUTH_CONTENT.brand}</span>
           </div>
-          <p className="text-indigo-200">הכנה חכמה לראיונות טכניים</p>
+          <p className="text-indigo-200">{AUTH_CONTENT.subtitle}</p>
         </div>
 
         <div className="bg-purple-50 dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-purple-200 dark:border-gray-700">
@@ -76,7 +77,7 @@ export default function Auth({ initialMode = 'login' }) {
                 mode === 'login' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
-              התחברות
+              {AUTH_CONTENT.tabs.login}
             </button>
             <button
               onClick={() => { setMode('register'); setError(''); }}
@@ -84,48 +85,48 @@ export default function Auth({ initialMode = 'login' }) {
                 mode === 'register' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
-              הרשמה
+              {AUTH_CONTENT.tabs.register}
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{AUTH_CONTENT.labels.fullName}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="ישראל ישראלי"
+                  placeholder={AUTH_CONTENT.placeholders.fullName}
                   className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">אימייל *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{AUTH_CONTENT.labels.email}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={AUTH_CONTENT.placeholders.email}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 dir="ltr"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{AUTH_CONTENT.labels.password}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={AUTH_CONTENT.placeholders.password}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 dir="ltr"
               />
               {mode === 'register' && (
-                <p className="text-xs text-gray-400 mt-1">Min 8 chars, uppercase, lowercase, and a number</p>
+                <p className="text-xs text-gray-400 mt-1">{AUTH_CONTENT.validation.passwordHint}</p>
               )}
             </div>
 
@@ -139,19 +140,19 @@ export default function Auth({ initialMode = 'login' }) {
                   className="w-4 h-4 accent-primary cursor-pointer"
                 />
                 <label htmlFor="rememberMe" className="text-sm text-gray-600 cursor-pointer select-none">
-                  זכור אותי
+                  {AUTH_CONTENT.labels.rememberMe}
                 </label>
               </div>
             )}
 
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">מוסד לימודים</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{AUTH_CONTENT.labels.university}</label>
                 <input
                   type="text"
                   value={university}
                   onChange={(e) => setUniversity(e.target.value)}
-                  placeholder="אוניברסיטת תל אביב"
+                  placeholder={AUTH_CONTENT.placeholders.university}
                   className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>
@@ -172,10 +173,10 @@ export default function Auth({ initialMode = 'login' }) {
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <i className="fas fa-spinner fa-spin"></i>
-                  {mode === 'login' ? 'מתחבר...' : 'נרשם...'}
+                  {mode === 'login' ? AUTH_CONTENT.submit.loginLoading : AUTH_CONTENT.submit.registerLoading}
                 </span>
               ) : (
-                mode === 'login' ? 'התחברות' : 'הרשמה'
+                mode === 'login' ? AUTH_CONTENT.submit.login : AUTH_CONTENT.submit.register
               )}
             </button>
           </form>

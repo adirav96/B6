@@ -7,8 +7,3 @@ export function sendError(res, status = 500, message = 'Internal server error', 
   if (details) payload.details = details;
   return res.status(status).json(payload);
 }
-
-export function sendSuccess(res, data) {
-  // Preserve existing behavior for simple responses
-  return res.json(data);
-}

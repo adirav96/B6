@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 
-export default function ProtectedRoute({ children, requireAdmin = false }) {
+export default function ProtectedRoute({ children, requireAdmin = false, blockAdmin = false }) {
   const { isLoggedIn, loading, isAdmin } = useApp();
   const router = useRouter();
 
@@ -15,8 +15,13 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     }
     if (!loading && isLoggedIn && requireAdmin && !isAdmin) {
       router.replace('/dashboard');
+      return;
     }
-  }, [isLoggedIn, loading, isAdmin, requireAdmin, router]);
+    // learner-only pages: send admins to their management area
+    if (!loading && isLoggedIn && blockAdmin && isAdmin) {
+      router.replace('/admin/users');
+    }
+  }, [isLoggedIn, loading, isAdmin, requireAdmin, blockAdmin, router]);
 
   if (loading) {
     return (
@@ -28,6 +33,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
 
   if (!isLoggedIn) return null;
   if (requireAdmin && !isAdmin) return null;
+  if (blockAdmin && isAdmin) return null;
 
   return children;
 }

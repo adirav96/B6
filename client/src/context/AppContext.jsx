@@ -196,7 +196,7 @@ export function AppProvider({ children }) {
         apiGetProblems(),
       ]);
       dispatch({ type: 'AUTH_READY', payload: { user, solutions, activityLog, problems: problems || [] } });
-      return { success: true };
+      return { success: true, isAdmin: user?.role === 'admin' };
     } catch (err) {
       return { success: false, error: err.message };
     }
@@ -248,6 +248,8 @@ export function AppProvider({ children }) {
   // and time/hint claims, then store what the server graded.
   const submitSolution = useCallback(
     async ({ timeSpent, hintsUsed }) => {
+      // admins can run problems to QA them, but their attempts are never saved
+      if (state.user?.role === 'admin') return { success: false, error: 'Admins do not submit solutions' };
       const { problemId } = state.session || {};
       if (!problemId) return { success: false, error: 'No active session' };
 
@@ -272,7 +274,7 @@ export function AppProvider({ children }) {
         return { success: false, error: err.message };
       }
     },
-    [state.session]
+    [state.session, state.user?.role]
   );
 
   const resetSession = useCallback(

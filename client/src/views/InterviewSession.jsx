@@ -22,6 +22,7 @@ export default function InterviewSession() {
     getProblemById,
     session,
     solutions,
+    isAdmin,
     startSession,
     updateSessionCode,
     addChatMessage,
@@ -404,17 +405,20 @@ export default function InterviewSession() {
                   <><i className="fas fa-play ml-1 text-green-400"></i> {INTERVIEW_SESSION_CONTENT.editor.run}</>
                 )}
               </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitLoading || runLoading}
-                className="bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors disabled:opacity-50 flex-1 sm:flex-none"
-              >
-                {submitLoading ? (
-                  <><i className="fas fa-spinner fa-spin ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submitLoading}</>
-                ) : (
-                  <><i className="fas fa-paper-plane ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submit}</>
-                )}
-              </button>
+              {/* admins can Run to QA a problem, but submissions aren't tracked */}
+              {!isAdmin && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitLoading || runLoading}
+                  className="bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors disabled:opacity-50 flex-1 sm:flex-none"
+                >
+                  {submitLoading ? (
+                    <><i className="fas fa-spinner fa-spin ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submitLoading}</>
+                  ) : (
+                    <><i className="fas fa-paper-plane ml-1"></i> {INTERVIEW_SESSION_CONTENT.editor.submit}</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 

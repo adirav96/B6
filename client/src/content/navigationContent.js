@@ -1,8 +1,10 @@
+// learnerOnly links are hidden from admins; adminOnly links are shown only to admins
 export const NAV_LINKS = [
-  { to: '/dashboard', label: 'דשבורד' },
+  { to: '/dashboard', label: 'דשבורד', learnerOnly: true },
   { to: '/problems', label: 'שאלות' },
-  { to: '/simulation', label: 'סימולציית ראיון' },
-  { to: '/progress', label: 'התקדמות' },
+  { to: '/simulation', label: 'סימולציית ראיון', learnerOnly: true },
+  { to: '/progress', label: 'התקדמות', learnerOnly: true },
+  { to: '/admin/users', label: 'ניהול', adminOnly: true },
 ];
 
 export const NAV_TEXT = {

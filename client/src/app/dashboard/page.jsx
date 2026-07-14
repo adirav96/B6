@@ -3,7 +3,7 @@ import Dashboard from '@/views/Dashboard';
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute blockAdmin>
       <Dashboard />
     </ProtectedRoute>
   );

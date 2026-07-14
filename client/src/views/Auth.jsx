@@ -37,7 +37,7 @@ export default function Auth({ initialMode = 'login' }) {
       if (result.success) {
         if (rememberMe) localStorage.setItem('remembered_email', email);
         else localStorage.removeItem('remembered_email');
-        router.push('/dashboard');
+        router.push(result.isAdmin ? '/admin/users' : '/dashboard');
       } else {
         setError(result.error);
       }

@@ -3,7 +3,7 @@ import Progress from '@/views/Progress';
 
 export default function ProgressPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute blockAdmin>
       <Progress />
     </ProtectedRoute>
   );

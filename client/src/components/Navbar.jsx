@@ -10,10 +10,18 @@ import { NAV_LINKS, NAV_TEXT } from '@/content/navigationContent';
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const { user, logout } = useApp();
+  const { user, isAdmin, logout } = useApp();
   const { dark, toggle: toggleDark } = useDarkMode();
   const router = useRouter();
   const pathname = usePathname();
+
+  // admins see only management links; learners see only learner links
+  const visibleLinks = NAV_LINKS.filter((link) => {
+    if (link.adminOnly) return isAdmin;
+    if (link.learnerOnly) return !isAdmin;
+    return true;
+  });
+  const homeHref = isAdmin ? '/admin/users' : '/dashboard';
 
   const handleLogout = () => {
     logout();
@@ -39,12 +47,12 @@ export default function Navbar() {
       <div className="container-max">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-3 sm:gap-8 min-w-0">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href={homeHref} className="flex items-center gap-2">
               <i className="fas fa-code text-primary text-2xl"></i>
               <span className="font-bold text-lg sm:text-xl text-purple-900 dark:text-white truncate">{NAV_TEXT.brand}</span>
             </Link>
             <div className="hidden md:flex gap-1">
-              {NAV_LINKS.map((link) => (
+              {visibleLinks.map((link) => (
                 <Link key={link.label} href={link.to} className={linkClass(link.to)}>
                   {link.label}
                 </Link>
@@ -107,7 +115,7 @@ export default function Navbar() {
       >
         <div className="px-3 pb-4 pt-2 space-y-2 border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 card-sm">
           <div className="stack-mobile">
-            {NAV_LINKS.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.to}

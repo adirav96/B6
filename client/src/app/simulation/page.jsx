@@ -3,7 +3,7 @@ import Simulation from '@/views/Simulation';
 
 export default function SimulationPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute blockAdmin>
       <Simulation />
     </ProtectedRoute>
   );

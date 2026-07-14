@@ -244,27 +244,32 @@ export function AppProvider({ children }) {
     []
   );
 
+  // The server runs the tests and computes the score; we submit only the code
+  // and time/hint claims, then store what the server graded.
   const submitSolution = useCallback(
-    async (payload) => {
+    async ({ timeSpent, hintsUsed }) => {
       const { problemId } = state.session || {};
-      if (!problemId) return;
-
-      // Update UI immediately so results screen is snappy, then persist in background.
-      dispatch({ type: 'SUBMIT_SOLUTION', payload: { ...payload, code: state.session.code } });
+      if (!problemId) return { success: false, error: 'No active session' };
 
       try {
-        await apiSaveSolution(problemId, {
-          score: payload.score,
-          timeSpent: payload.timeSpent,
+        const { solution, results } = await apiSaveSolution(problemId, {
           code: state.session.code,
-          testsPassed: payload.testsPassed,
-          totalTests: payload.totalTests,
-          hintsUsed: payload.hintsUsed,
+          timeSpent,
+          hintsUsed,
         });
-        const today = new Date().toISOString().split('T')[0];
-        await apiSaveActivity(today);
+        dispatch({ type: 'SUBMIT_SOLUTION', payload: solution });
+
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          await apiSaveActivity(today);
+        } catch (err) {
+          // activity tracking is best-effort; the solution itself is saved
+          console.error('Failed to save activity:', err);
+        }
+
+        return { success: true, results };
       } catch (err) {
-        console.error('Failed to save to server:', err);
+        return { success: false, error: err.message };
       }
     },
     [state.session]
@@ -410,8 +415,10 @@ export function AppProvider({ children }) {
         hard: { solved: 0, total: 0 },
       };
       problemsData.forEach((p) => {
-        out[p.difficulty].total++;
-        if (state.solutions[p.id]) out[p.difficulty].solved++;
+        const bucket = out[p.difficulty];
+        if (!bucket) return; // skip problems with unexpected difficulty values
+        bucket.total++;
+        if (state.solutions[p.id]) bucket.solved++;
       });
       return out;
     },

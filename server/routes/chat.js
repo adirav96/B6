@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import auth from '../middleware/auth.js';
 import { chatLimiter } from '../middleware/rateLimiter.js';
 import { validateChatRequest } from '../utils/validators.js';
-import { escapePromptText } from '../utils/security.js';
+import { sanitizePromptText } from '../utils/security.js';
 import { AI_CONFIG } from '../config/constants.js';
 import { sendError } from '../utils/response.js';
 
@@ -25,24 +25,24 @@ router.post('/', async (req, res) => {
 
   const examplesText = problem.examples?.length
     ? '\nדוגמאות:\n' + problem.examples.map((ex, i) =>
-        `דוגמה ${i + 1}: קלט: ${escapePromptText(ex.input)} → פלט: ${escapePromptText(ex.output)}${ex.explanation ? ` (${escapePromptText(ex.explanation)})` : ''}`
+        `דוגמה ${i + 1}: קלט: ${sanitizePromptText(ex.input)} → פלט: ${sanitizePromptText(ex.output)}${ex.explanation ? ` (${sanitizePromptText(ex.explanation)})` : ''}`
       ).join('\n')
     : '';
 
   const constraintsText = problem.constraints?.length
-    ? '\nאילוצים:\n' + problem.constraints.map(c => `- ${escapePromptText(c)}`).join('\n')
+    ? '\nאילוצים:\n' + problem.constraints.map(c => `- ${sanitizePromptText(c)}`).join('\n')
     : '';
 
   const hintsText = hintsRevealed?.length
-    ? '\nרמזים שהמשתמש כבר קיבל:\n' + hintsRevealed.map((h, i) => `רמז ${i + 1}: ${escapePromptText(h.content ?? h)}`).join('\n')
+    ? '\nרמזים שהמשתמש כבר קיבל:\n' + hintsRevealed.map((h, i) => `רמז ${i + 1}: ${sanitizePromptText(h.content ?? h)}`).join('\n')
     : '';
 
   const systemPrompt = `אתה מראיין טכני בעברית לתפקיד מפתח תוכנה. אתה מנהל ראיון קידוד על הבעיה הבאה:
 
-שם הבעיה: ${escapePromptText(problem.title)} (${escapePromptText(problem.titleHe)})
-רמת קושי: ${escapePromptText(problem.difficulty)}
-נושא: ${escapePromptText(problem.topic)}
-תיאור: ${escapePromptText(problem.descriptionHe)}
+שם הבעיה: ${sanitizePromptText(problem.title)} (${sanitizePromptText(problem.titleHe)})
+רמת קושי: ${sanitizePromptText(problem.difficulty)}
+נושא: ${sanitizePromptText(problem.topic)}
+תיאור: ${sanitizePromptText(problem.descriptionHe)}
 ${examplesText}${constraintsText}
 
 הנחיות:

@@ -3,18 +3,21 @@
  */
 
 /**
- * Escape potentially dangerous text for prompt injection
+ * Sanitize untrusted text before interpolating it into an LLM prompt.
+ * Length capping is the real defense here — it bounds how much injected
+ * instruction text can ride along. Control characters are stripped because
+ * they serve no purpose in problem descriptions. Note this cannot fully
+ * prevent prompt injection; problem content is admin-authored, which is the
+ * primary trust boundary.
  */
-export function escapePromptText(text) {
+export function sanitizePromptText(text) {
   if (!text) return '';
 
-  // Limit field length to prevent prompt injection
   const maxLength = 1000;
   return String(text)
     .slice(0, maxLength)
-    .replace(/\\/g, '\\\\')      // Escape backslashes
-    .replace(/`/g, '\\`')        // Escape backticks
-    .replace(/\$/g, '\\$');      // Escape dollar signs
+    // strip control chars except newline (\x0A) and tab (\x09)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
 /**

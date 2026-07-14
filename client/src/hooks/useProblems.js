@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiGetProblems } from '@/services/api';
 
-export function useProblems({ includeTests = false } = {}) {
+export function useProblems() {
     const [problems, setProblems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,7 +14,7 @@ export function useProblems({ includeTests = false } = {}) {
         (async () => {
             setLoading(true);
             try {
-                const { problems: data } = await apiGetProblems({ includeTests });
+                const { problems: data } = await apiGetProblems();
                 if (cancelled) return;
                 setProblems(data || []);
                 setError(null);
@@ -30,7 +30,7 @@ export function useProblems({ includeTests = false } = {}) {
         return () => {
             cancelled = true;
         };
-    }, [includeTests]);
+    }, []);
 
     const problemsById = useMemo(() => Object.fromEntries(problems.map((problem) => [problem.id, problem])), [problems]);
 

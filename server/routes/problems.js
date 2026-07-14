@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import auth from '../middleware/auth.js';
-import admin from '../middleware/admin.js';
+import admin, { isAdminUser } from '../middleware/admin.js';
+import * as usersDb from '../db/users.js';
 import * as problemsDb from '../db/problems.js';
 import { validateProblemData } from '../utils/validators.js';
 import { sendError } from '../utils/response.js';
@@ -9,10 +10,22 @@ const router = Router();
 
 router.use(auth);
 
+function stripHiddenFields(problem) {
+  const { testCases, testCasesJson, ...publicProblem } = problem;
+  return publicProblem;
+}
+
+async function checkIsAdmin(req) {
+  const user = await usersDb.findById(req.userId);
+  return isAdminUser(user);
+}
+
 router.get('/', async (req, res) => {
   try {
     const all = await problemsDb.getAll();
-    const problems = req.userRole === 'admin' ? all : all.filter((p) => p.published !== false);
+    const isAdmin = await checkIsAdmin(req);
+    const visible = isAdmin ? all : all.filter((p) => p.published !== false);
+    const problems = isAdmin ? visible : visible.map(stripHiddenFields);
     res.json({ problems });
   } catch (err) {
     console.error('Get problems error:', err);
@@ -31,11 +44,13 @@ router.get('/:problemId', async (req, res) => {
     if (!problem) {
       return sendError(res, 404, 'Problem not found', 'NOT_FOUND');
     }
-    if (req.userRole !== 'admin' && problem.published === false) {
+
+    const isAdmin = await checkIsAdmin(req);
+    if (!isAdmin && problem.published === false) {
       return sendError(res, 404, 'Problem not found', 'NOT_FOUND');
     }
 
-    res.json({ problem });
+    res.json({ problem: isAdmin ? problem : stripHiddenFields(problem) });
   } catch (err) {
     console.error('Get problem error:', err);
     return sendError(res, 500, 'Server error', 'SERVER_ERROR');

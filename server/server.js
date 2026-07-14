@@ -16,6 +16,10 @@ import runRoutes from './routes/run.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// requests arrive via the Next.js rewrite proxy — without this, rate limiters
+// would see the proxy's IP and throttle all users as one
+app.set('trust proxy', 1);
+
 // allow requests from the Next.js dev server and production frontend
 const allowedOrigins = [
   'http://localhost:3000',

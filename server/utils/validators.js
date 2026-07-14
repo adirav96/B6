@@ -35,31 +35,22 @@ export function validateChatRequest({ problem, messages, code, hintsRevealed }) 
   return errors;
 }
 
-export function validateSolutionData({ score, timeSpent, code, testsPassed, totalTests, hintsUsed }) {
+// score/testsPassed/totalTests are computed server-side from an actual test
+// run, so the client only submits code plus time/hint claims
+export function validateSolutionData({ code, timeSpent, hintsUsed }) {
   const errors = [];
 
-  if (typeof score !== 'number' || score < 0 || score > 100) {
-    errors.push('score must be a number between 0 and 100');
-  }
-  if (typeof timeSpent !== 'number' || timeSpent < 0) {
-    errors.push('timeSpent must be a non-negative number');
-  }
-  if (code && typeof code !== 'string') {
-    errors.push('code must be a string');
+  if (!code || typeof code !== 'string') {
+    errors.push('code is required and must be a string');
   }
   if (code && code.length > 50000) {
     errors.push('code too large (max 50000 chars)');
   }
-  if (typeof testsPassed !== 'number' || testsPassed < 0) {
-    errors.push('testsPassed must be a non-negative number');
+  // Number.isFinite also rejects NaN/Infinity, which pass typeof + range checks
+  if (!Number.isFinite(timeSpent) || timeSpent < 0) {
+    errors.push('timeSpent must be a non-negative number');
   }
-  if (typeof totalTests !== 'number' || totalTests < 0) {
-    errors.push('totalTests must be a non-negative number');
-  }
-  if (testsPassed > totalTests) {
-    errors.push('testsPassed cannot exceed totalTests');
-  }
-  if (typeof hintsUsed !== 'number' || hintsUsed < 0) {
+  if (!Number.isFinite(hintsUsed) || hintsUsed < 0) {
     errors.push('hintsUsed must be a non-negative number');
   }
 
@@ -72,9 +63,9 @@ export function validateActivityData({ date }) {
   if (!date) {
     errors.push('date is required');
   }
-  // Validate ISO date format YYYY-MM-DD
-  if (date && !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    errors.push('date must be in YYYY-MM-DD format');
+  // Validate ISO date format YYYY-MM-DD and that it's a real calendar date
+  if (date && (typeof date !== 'string' || !date.match(/^\d{4}-\d{2}-\d{2}$/) || Number.isNaN(Date.parse(date)))) {
+    errors.push('date must be a valid date in YYYY-MM-DD format');
   }
 
   return errors;
@@ -99,7 +90,7 @@ export function validateProblemData(problem, { isCreate = false } = {}) {
   if (problem.difficulty && !['easy', 'medium', 'hard'].includes(problem.difficulty)) {
     errors.push('difficulty must be one of: easy, medium, hard');
   }
-  if (problem.acceptance !== undefined && (typeof problem.acceptance !== 'number' || problem.acceptance < 0 || problem.acceptance > 100)) {
+  if (problem.acceptance !== undefined && (!Number.isFinite(problem.acceptance) || problem.acceptance < 0 || problem.acceptance > 100)) {
     errors.push('acceptance must be a number between 0 and 100');
   }
   if (problem.companies !== undefined && !Array.isArray(problem.companies)) {

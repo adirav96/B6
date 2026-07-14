@@ -1,7 +1,7 @@
 import rateLimit from 'express-rate-limit';
 
 function isDevelopment() {
-  return process.env.NODE_ENV !== 'production';
+  return process.env.NODE_ENV === 'development';
 }
 
 function limiterHandler(message) {
@@ -29,6 +29,15 @@ export const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: limiterHandler('Too many registration attempts. Please try again in an hour.'),
+});
+
+export const runLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: isDevelopment() ? 200 : 20, // each run spawns a python process — cap it
+  message: 'Too many code runs. Please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: limiterHandler('Too many code runs. Please slow down.'),
 });
 
 export const chatLimiter = rateLimit({

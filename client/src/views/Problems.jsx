@@ -14,12 +14,8 @@ function getStatus(problemId, solutions, session) {
 }
 
 export default function Problems() {
-<<<<<<< HEAD
-  const { solutions, session } = useApp();
-  const searchParams = useSearchParams();
-=======
   const { solutions, session, problems: dbProblems, isAdmin, updateProblem } = useApp();
->>>>>>> a6ce4aebb3e9784eb0d19b23d11876d24e9bb4ae
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState('');
   const [topicFilter, setTopicFilter] = useState(searchParams.get('topic') || '');
   const [difficultyFilter, setDifficultyFilter] = useState('');

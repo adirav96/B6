@@ -27,11 +27,6 @@ async function request(path, options = {}, retries = 2) {
 
       const res = await fetch(`/api${path}`, { ...options, headers });
 
-      if (res.status === 401) {
-        setToken(null);
-        throw new Error('UNAUTHORIZED');
-      }
-
       if (res.status === 204) {
         return {};
       }
@@ -39,9 +34,24 @@ async function request(path, options = {}, retries = 2) {
       // non-JSON usually means the proxy returned an error page
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
+        if (res.status === 401) {
+          setToken(null);
+          throw new Error('UNAUTHORIZED');
+        }
         throw new Error('NOT_JSON');
       }
       const data = await res.json();
+      if (res.status === 401) {
+        // wrong login credentials isn't a session problem — surface the real
+        // message and keep any existing token
+        if (data.errorCode === 'INVALID_CREDENTIALS') {
+          const err = new Error(data.error || 'Incorrect email or password');
+          err.status = 401;
+          throw err;
+        }
+        setToken(null);
+        throw new Error('UNAUTHORIZED');
+      }
       if (!res.ok) {
         const err = new Error(data.error || 'Server error');
         err.status = res.status;
@@ -94,14 +104,8 @@ export async function apiGetActivity() {
   return request('/activity');
 }
 
-export async function apiGetProblems({ includeTests = false } = {}) {
-  const suffix = includeTests ? '?includeTests=true' : '';
-  return request(`/problems${suffix}`);
-}
-
-export async function apiGetProblem(problemId, { includeTests = false } = {}) {
-  const suffix = includeTests ? '?includeTests=true' : '';
-  return request(`/problems/${problemId}${suffix}`);
+export async function apiGetProblems() {
+  return request('/problems');
 }
 
 export async function apiGetAdminUsers() {
@@ -112,30 +116,6 @@ export async function apiSetUserAdmin(userId, isAdmin) {
   return request(`/admin/users/${userId}/role`, {
     method: 'PATCH',
     body: JSON.stringify({ isAdmin }),
-  });
-}
-
-export async function apiGetAdminProblems() {
-  return request('/admin/problems');
-}
-
-export async function apiCreateAdminProblem(problem) {
-  return request('/admin/problems', {
-    method: 'POST',
-    body: JSON.stringify(problem),
-  });
-}
-
-export async function apiUpdateAdminProblem(problemId, problem) {
-  return request(`/admin/problems/${problemId}`, {
-    method: 'PUT',
-    body: JSON.stringify(problem),
-  });
-}
-
-export async function apiDeleteAdminProblem(problemId) {
-  return request(`/admin/problems/${problemId}`, {
-    method: 'DELETE',
   });
 }
 

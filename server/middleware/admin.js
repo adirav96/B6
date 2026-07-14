@@ -8,6 +8,12 @@ function getAdminEmails() {
     .filter(Boolean);
 }
 
+export function isAdminUser(user) {
+  if (!user) return false;
+  const adminEmails = getAdminEmails();
+  return user.role === 'admin' || adminEmails.includes((user.email || '').toLowerCase());
+}
+
 export default async function adminMiddleware(req, res, next) {
   try {
     const user = await usersDb.findById(req.userId);
@@ -15,10 +21,7 @@ export default async function adminMiddleware(req, res, next) {
       return sendError(res, 401, 'Unauthorized — user not found', 'AUTH_USER_NOT_FOUND');
     }
 
-    const adminEmails = getAdminEmails();
-    const isAdmin = user.role === 'admin' || adminEmails.includes((user.email || '').toLowerCase());
-
-    if (!isAdmin) {
+    if (!isAdminUser(user)) {
       return sendError(res, 403, 'Admin access required', 'ADMIN_REQUIRED');
     }
 

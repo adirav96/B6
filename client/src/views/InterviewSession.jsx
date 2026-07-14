@@ -66,11 +66,13 @@ export default function InterviewSession() {
   const [runLoading, setRunLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const chatEndRef = useRef(null);
-  const initializedRef = useRef(false);
+  const initializedRef = useRef(null);
 
   useEffect(() => {
-    if (!problem || initializedRef.current) return;
-    initializedRef.current = true;
+    // track the initialized problem id (not a boolean) so jumping straight to
+    // another problem's route (simulation mode) starts a fresh session
+    if (!problem || initializedRef.current === problem.id) return;
+    initializedRef.current = problem.id;
     const initialMsg = [{ role: 'ai', content: getInitialMessage(problem) }];
     startSession(problem.id, problem.starterCode.python, initialMsg);
   }, [problem]);
@@ -141,10 +143,11 @@ export default function InterviewSession() {
     setRunLoading(true);
     try {
       // "Run" only executes tests and stores result; it does not submit.
-      const result = await runCode(session.code, problem.testCases, problem.functionName);
+      const result = await runCode(session.code, problem.id, problem.functionName);
       setTestResults({
         results: result.results,
-        allPassed: result.results.every((r) => r.passed),
+        allPassed: result.success === true,
+        error: result.results.length === 0 ? result.stderr : null,
       });
     } catch {
       setTestResults({ results: [], allPassed: false });
@@ -156,32 +159,17 @@ export default function InterviewSession() {
   const handleSubmit = async () => {
     setSubmitLoading(true);
     try {
-      const result = await runCode(session.code, problem.testCases, problem.functionName);
-      const testResults = {
-        results: result.results,
-        allPassed: result.results.every((r) => r.passed),
-      };
-      setTestResults(testResults);
-
-      const testsPassed = result.results.filter((r) => r.passed).length;
-      const totalTests = result.results.length;
+      // the server runs the tests and computes the score — we only report
+      // how long the session took and how many hints were opened
       const timeSpent = Math.floor((Date.now() - session.startTime) / 1000);
-      const timeMinutes = timeSpent / 60;
-      // score = 70% from tests + up to 30 speed bonus - 5 per hint used, capped [0,100]
-      const timeBonus = Math.max(0, 30 - Math.floor(timeMinutes));
-      const hintPenalty = (session.hintsRevealed?.length || 0) * 5;
-      const score = Math.max(0, Math.min(100, Math.round((testsPassed / totalTests) * 70 + timeBonus - hintPenalty)));
+      const hintsUsed = session.hintsRevealed?.length || 0;
 
-      submitSolution({
-        score,
-        timeSpent,
-        testsPassed,
-        totalTests,
-        hintsUsed: session.hintsRevealed?.length || 0,
-      });
+      const result = await submitSolution({ timeSpent, hintsUsed });
+      if (!result.success) {
+        setTestResults({ results: [], allPassed: false, error: result.error });
+        return;
+      }
       router.push(`/results/${problem.id}`);
-    } catch {
-      setTestResults({ results: [], allPassed: false });
     } finally {
       setSubmitLoading(false);
     }
@@ -434,6 +422,9 @@ export default function InterviewSession() {
             <div className="mt-3 bg-gray-900 rounded-lg p-3">
               <div className="text-xs font-medium text-gray-400 mb-2">{INTERVIEW_SESSION_CONTENT.editor.testResults}</div>
               <div className="space-y-1.5 text-xs font-mono overflow-x-auto" dir="ltr">
+                {session.testResults.error && (
+                  <div className="text-red-400 whitespace-pre-wrap">{session.testResults.error}</div>
+                )}
                 {session.testResults.results.map((r, idx) => (
                   <div key={idx} className={`flex items-center gap-2 ${r.passed ? 'text-green-400' : 'text-red-400'}`}>
                     <i className={`fas ${r.passed ? 'fa-check-circle' : 'fa-times-circle'}`}></i>

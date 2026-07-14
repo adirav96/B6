@@ -59,10 +59,10 @@ export async function getAll() {
 }
 
 export async function updateRole(userId, role) {
-  await getDb().collection(COLLECTION).doc(userId).set({ role: role === 'admin' ? 'admin' : 'user' }, { merge: true });
+  const ref = getDb().collection(COLLECTION).doc(userId);
+  const existing = await ref.get();
+  if (!existing.exists) return null;
+
+  await ref.set({ role: role === 'admin' ? 'admin' : 'user' }, { merge: true });
   return findById(userId);
 }
-
-// Alias exports for standardized naming
-export const getByEmail = findByEmail;
-export const getById = findById;

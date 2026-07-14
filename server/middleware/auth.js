@@ -12,7 +12,6 @@ export default function authMiddleware(req, res, next) {
     const token = header.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
-    req.userRole = decoded.role || 'user';
     next();
   } catch (err) {
     // covers both expired and tampered tokens

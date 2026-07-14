@@ -2,6 +2,37 @@ import { getDb } from '../firebase.js';
 
 const COLLECTION = 'problems';
 
+// only these fields are persisted — stops clients from writing arbitrary
+// extra keys into the problem documents
+const WRITABLE_FIELDS = [
+  'id', 'title', 'titleHe', 'topic', 'difficulty', 'acceptance', 'companies',
+  'descriptionHe', 'examples', 'constraints', 'starterCode', 'functionName',
+  'testCases', 'hints', 'published',
+];
+
+function pickWritableFields(data) {
+  const out = {};
+  for (const key of WRITABLE_FIELDS) {
+    if (data[key] !== undefined) out[key] = data[key];
+  }
+  return out;
+}
+
+// the DB migration stored tests as a JSON string under testCasesJson;
+// newer writes use a testCases array — support both
+function parseTestCases(raw) {
+  if (Array.isArray(raw.testCases)) return raw.testCases;
+  if (typeof raw.testCasesJson === 'string') {
+    try {
+      const parsed = JSON.parse(raw.testCasesJson);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function normalizeProblem(doc) {
   const raw = doc.data() || {};
   const idValue = raw.id ?? doc.id;
@@ -20,7 +51,7 @@ function normalizeProblem(doc) {
     constraints: Array.isArray(raw.constraints) ? raw.constraints : [],
     starterCode: raw.starterCode || { python: '' },
     functionName: raw.functionName || '',
-    testCases: Array.isArray(raw.testCases) ? raw.testCases : [],
+    testCases: parseTestCases(raw),
     hints: Array.isArray(raw.hints) ? raw.hints : [],
     published: raw.published !== false,
     updatedAt: raw.updatedAt || null,
@@ -54,7 +85,7 @@ export async function create(problemData) {
   }
 
   const payload = {
-    ...problemData,
+    ...pickWritableFields(problemData),
     id: Number(problemData.id),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -77,7 +108,7 @@ export async function update(problemId, updates) {
   }
 
   const payload = {
-    ...updates,
+    ...pickWritableFields(updates),
     id: Number(problemId),
     updatedAt: new Date().toISOString(),
   };

@@ -59,7 +59,7 @@ export default function Auth({ initialMode = 'login' }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-bl from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-bl from-indigo-900 via-purple-900 to-indigo-800 dark:from-[#0d0b1a] dark:via-[#1a1033] dark:to-[#0b0a17] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -69,12 +69,12 @@ export default function Auth({ initialMode = 'login' }) {
           <p className="text-indigo-200">{AUTH_CONTENT.subtitle}</p>
         </div>
 
-        <div className="bg-purple-50 dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-purple-200 dark:border-gray-700">
-          <div className="flex mb-6 bg-purple-100 dark:bg-gray-700 rounded-lg p-1">
+        <div className="bg-purple-50 dark:bg-gray-900 rounded-2xl shadow-xl p-8 border border-purple-200 dark:border-gray-700">
+          <div className="flex mb-6 bg-purple-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => { setMode('login'); setError(''); }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'login' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                mode === 'login' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
               {AUTH_CONTENT.tabs.login}
@@ -82,7 +82,7 @@ export default function Auth({ initialMode = 'login' }) {
             <button
               onClick={() => { setMode('register'); setError(''); }}
               className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'register' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                mode === 'register' ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
               }`}
             >
               {AUTH_CONTENT.tabs.register}

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import * as usersDb from '../db/users.js';
 import auth from '../middleware/auth.js';
 import { loginLimiter, registerLimiter } from '../middleware/rateLimiter.js';
@@ -8,6 +9,10 @@ import { isStrongPassword, getPasswordError } from '../utils/security.js';
 import { sendError } from '../utils/response.js';
 
 const router = Router();
+
+// used to burn the same bcrypt cost when the email doesn't exist, so response
+// timing can't reveal which emails are registered
+const DUMMY_HASH = bcrypt.hashSync('timing-equalizer', 10);
 
 // tokens expire after 7 days — long enough to not annoy users, short enough to rotate regularly
 function signToken(user) {
@@ -55,8 +60,13 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 
     const user = await usersDb.findByEmail(email);
-    // compare returns false for non-existent user too — keeps timing consistent
-    if (!user || !(await usersDb.comparePassword(user, password))) {
+    let passwordOk = false;
+    if (user) {
+      passwordOk = await usersDb.comparePassword(user, password);
+    } else {
+      await bcrypt.compare(password, DUMMY_HASH);
+    }
+    if (!user || !passwordOk) {
       return sendError(res, 401, 'Incorrect email or password', 'INVALID_CREDENTIALS');
     }
 

@@ -265,7 +265,7 @@ export default function InterviewSession() {
               {problem.examples.map((ex, idx) => (
                 <div key={idx} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                   <h4 className="font-semibold text-gray-900 mb-2">{INTERVIEW_SESSION_CONTENT.problem.example(idx)}</h4>
-                  <p className="font-mono text-sm">
+                  <p className="font-mono text-sm break-words" dir="ltr">
                     <strong>{INTERVIEW_SESSION_CONTENT.problem.inputLabel}</strong> {ex.input}<br />
                     <strong>{INTERVIEW_SESSION_CONTENT.problem.outputLabel}</strong> {ex.output}
                     {ex.explanation && (<><br /><strong>{INTERVIEW_SESSION_CONTENT.problem.explanationLabel}</strong> {ex.explanation}</>)}

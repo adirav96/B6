@@ -35,7 +35,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="app-header sticky top-0 z-50 overflow-x-hidden">
+    <nav className="app-header sticky top-0 z-50">
       <div className="container-max">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-3 sm:gap-8 min-w-0">
